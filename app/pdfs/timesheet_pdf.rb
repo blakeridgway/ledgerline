@@ -19,7 +19,7 @@ class TimesheetPdf
       info: {
         Title: "Timesheet #{safe(client.display_name)} #{safe(timesheet.month_label)}",
         Author: safe(user.billing_name),
-        Creator: "time_logix"
+        Creator: "Ledger Line"
       }
     )
 

@@ -17,7 +17,7 @@ class InvoicePdf
       info: {
         Title: "Invoice #{safe(invoice.number)}",
         Author: safe(user.billing_name),
-        Creator: "time_logix"
+        Creator: "Ledger Line"
       }
     )
 

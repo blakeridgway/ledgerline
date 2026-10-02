@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "time_logix" %></title>
+    <title><%= content_for(:title) || "Ledger Line" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="time_logix">
+    <meta name="application-name" content="Ledger Line">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -25,8 +25,8 @@
       <header class="topbar">
         <div class="topbar__inner">
           <%= link_to root_path, class: "brand" do %>
-            <span class="brand__mark">TL</span>
-            <span>time_logix</span>
+            <span class="brand__mark">LL</span>
+            <span>Ledger Line</span>
           <% end %>
 
           <nav class="nav">

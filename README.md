@@ -1,4 +1,4 @@
-# time_logix
+# Ledger Line
 
 A small Rails app for 1099 / independent contractor work: track clients, log
 time, and turn the work into an invoice PDF. Two billing models are supported:
