@@ -1,0 +1,10 @@
+<% if object.errors.any? %>
+  <div class="flash flash--alert" style="margin:0">
+    <strong>Please fix the following:</strong>
+    <ul style="margin:0.4rem 0 0; padding-left:1.1rem">
+      <% object.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

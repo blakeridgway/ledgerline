@@ -1,0 +1,14 @@
+<% content_for :title, "Edit #{@client.display_name} · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Edit <%= @client.display_name %></h1>
+    <div class="page-head__meta">Changing the rate only affects future invoices.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card__body">
+    <%= render "form", client: @client, submit_label: "Save changes" %>
+  </div>
+</div>

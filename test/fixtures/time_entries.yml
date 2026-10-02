@@ -1,0 +1,62 @@
+acme_unbilled_a:
+  client: acme
+  worked_on: <%= Date.current.beginning_of_month %>
+  hours: 2.5
+  description: Discovery workshop
+  billable: true
+
+acme_unbilled_b:
+  client: acme
+  worked_on: <%= Date.current.beginning_of_month + 1.day %>
+  hours: 3.5
+  description: Data model review
+  billable: true
+
+acme_non_billable:
+  client: acme
+  worked_on: <%= Date.current.beginning_of_month + 2.days %>
+  hours: 1
+  description: Internal admin
+  billable: false
+
+acme_last_month:
+  client: acme
+  worked_on: <%= Date.current.beginning_of_month - 3.days %>
+  hours: 4
+  description: Prior month cleanup
+  billable: true
+
+vertex_retainer_hours:
+  client: vertex
+  worked_on: <%= Date.current.beginning_of_month %>
+  hours: 4
+  description: Architecture review
+  billable: true
+
+vertex_sprint_planning:
+  client: vertex
+  worked_on: <%= Date.current.beginning_of_month + 1.day %>
+  hours: 4
+  description: Sprint planning
+  billable: true
+
+vertex_code_review:
+  client: vertex
+  worked_on: <%= Date.current.beginning_of_month + 1.day %>
+  hours: 3.5
+  description: Code review
+  billable: true
+
+vertex_non_billable:
+  client: vertex
+  worked_on: <%= Date.current.beginning_of_month + 2.days %>
+  hours: 1
+  description: Internal admin
+  billable: false
+
+rival_entry:
+  client: rival
+  worked_on: <%= Date.current.beginning_of_month %>
+  hours: 5
+  description: Other tenant work
+  billable: true

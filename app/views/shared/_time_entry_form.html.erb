@@ -1,0 +1,78 @@
+<%#
+  locals:
+    time_entry  - TimeEntry record (new or persisted)
+    clients     - collection of clients to choose from
+    return_to   - optional path to return to after saving
+    show_timer  - optional boolean, renders the stopwatch
+    submit_label - optional button label
+%>
+<% show_timer = local_assigns.fetch(:show_timer, false) %>
+<% submit_label = local_assigns.fetch(:submit_label, time_entry.persisted? ? "Save entry" : "Log time") %>
+
+<%= form_with model: time_entry,
+      url: time_entry.persisted? ? time_entry_path(time_entry) : time_entries_path,
+      class: "form",
+      data: { controller: "timer" } do |form| %>
+
+  <% if local_assigns[:return_to].present? %>
+    <%= hidden_field_tag :return_to, return_to %>
+  <% end %>
+
+  <% if time_entry.errors.any? %>
+    <div class="flash flash--alert" style="margin:0">
+      <strong>Please fix the following:</strong>
+      <ul style="margin:0.4rem 0 0; padding-left:1.1rem">
+        <% time_entry.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% if show_timer %>
+    <div class="timer">
+      <button type="button" class="btn btn--sm btn--primary"
+              data-timer-target="toggle" data-action="timer#toggle">Start timer</button>
+      <span class="timer__clock" data-timer-target="display">00:00:00</span>
+      <span class="timer__hint">Stop the timer to fill in the hours field.</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--sm btn--ghost" data-action="timer#reset">Reset</button>
+    </div>
+  <% end %>
+
+  <div class="form__row">
+    <div class="field">
+      <%= form.label :client_id, "Client" %>
+      <%= form.collection_select :client_id, clients, :id, :display_name,
+            { prompt: "Select a client…" },
+            { required: true } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :worked_on, "Date" %>
+      <%= form.date_field :worked_on, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :hours, "Hours" %>
+      <%= form.number_field :hours, step: 0.25, min: 0, placeholder: "1.50",
+            required: true, data: { timer_target: "hours" } %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :description, "What did you work on?" %>
+    <%= form.text_area :description, rows: 2, placeholder: "Reviewed Q3 revenue model, updated forecast" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit submit_label, class: "btn btn--primary" %>
+    <span class="field--inline">
+      <%= form.check_box :billable %>
+      <%= form.label :billable, "Billable" %>
+    </span>
+    <% if time_entry.persisted? %>
+      <%= link_to "Cancel", time_entries_path, class: "btn btn--ghost" %>
+    <% end %>
+  </div>
+<% end %>

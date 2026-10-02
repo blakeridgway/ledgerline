@@ -1,0 +1,17 @@
+<% if @total_pages && @total_pages > 1 %>
+  <div class="pagination">
+    <span>
+      Showing <%= (@page - 1) * ApplicationController::PER_PAGE + 1 %>–<%= [ @page * ApplicationController::PER_PAGE, @total_count ].min %>
+      of <%= @total_count %>
+    </span>
+    <span class="row">
+      <% if @page > 1 %>
+        <%= link_to "← Newer", url_for(request.query_parameters.merge(page: @page - 1)), class: "btn btn--sm" %>
+      <% end %>
+      <span class="muted">Page <%= @page %> of <%= @total_pages %></span>
+      <% if @page < @total_pages %>
+        <%= link_to "Older →", url_for(request.query_parameters.merge(page: @page + 1)), class: "btn btn--sm" %>
+      <% end %>
+    </span>
+  </div>
+<% end %>

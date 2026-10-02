@@ -1,0 +1,30 @@
+<div class="auth">
+  <div class="auth__card">
+    <div class="auth__brand">
+      <span class="brand__mark">TL</span>
+      <strong style="font-size:1.05rem">time_logix</strong>
+    </div>
+
+    <div class="card">
+      <div class="card__body">
+        <h1>Reset your password</h1>
+        <p class="muted small">We'll email you a link to choose a new password.</p>
+
+        <%= render "shared/flash" %>
+
+        <%= form_with url: passwords_path, class: "form" do |form| %>
+          <div class="field">
+            <%= form.label :email_address, "Email" %>
+            <%= form.email_field :email_address, required: true, autofocus: true,
+                  autocomplete: "username", placeholder: "you@example.com",
+                  value: params[:email_address] %>
+          </div>
+
+          <%= form.submit "Email reset instructions", class: "btn btn--primary btn--block" %>
+        <% end %>
+
+        <p class="small" style="margin:1rem 0 0"><%= link_to "Back to sign in", new_session_path %></p>
+      </div>
+    </div>
+  </div>
+</div>

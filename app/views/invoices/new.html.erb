@@ -1,0 +1,81 @@
+<% content_for :title, "New invoice · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>New invoice</h1>
+    <div class="page-head__meta">Hourly clients bill tracked hours; retainer clients bill a flat monthly fee.</div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Cancel", invoices_path, class: "btn" %>
+  </div>
+</div>
+
+<% if @clients.empty? %>
+  <div class="card">
+    <div class="empty">
+      <h3>No clients yet</h3>
+      <p>Add a client before creating an invoice.</p>
+      <%= link_to "Add client", new_client_path, class: "btn btn--primary" %>
+    </div>
+  </div>
+<% else %>
+  <div class="grid grid--2">
+    <div class="card">
+      <div class="card__header"><h2>Invoice details</h2></div>
+      <div class="card__body">
+        <%= form_with url: invoices_path, method: :post, class: "form",
+              data: { controller: "invoice-preview" } do |form| %>
+          <div class="field">
+            <%= form.label :client_id, "Client" %>
+            <%= form.collection_select :client_id, @clients, :id, :display_name,
+                  { selected: @client&.id, prompt: "Select a client…" },
+                  { required: true,
+                    data: { action: "change->invoice-preview#refresh" } } %>
+          </div>
+
+          <div class="form__row">
+            <div class="field">
+              <%= form.label :period_start, "Period start" %>
+              <%= form.date_field :period_start, value: @period_start, required: true,
+                    data: { action: "change->invoice-preview#refresh" } %>
+            </div>
+            <div class="field">
+              <%= form.label :period_end, "Period end" %>
+              <%= form.date_field :period_end, value: @period_end, required: true,
+                    data: { action: "change->invoice-preview#refresh" } %>
+            </div>
+          </div>
+
+          <div class="field">
+            <%= form.label :issued_on, "Issue date" %>
+            <%= form.date_field :issued_on, value: @issued_on %>
+            <span class="hint">The due date follows your business payment terms.</span>
+          </div>
+
+          <div class="field">
+            <%= form.label :notes, "Notes on the invoice" %>
+            <%= form.text_area :notes, rows: 3, value: @notes, placeholder: "Thanks for your business." %>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary">Create invoice</button>
+            <button type="submit" name="preview" value="1" class="btn"
+                    data-turbo-frame="invoice_preview"
+                    data-invoice-preview-target="button">
+              Refresh preview
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header"><h2>Preview</h2></div>
+      <div class="card__body">
+        <turbo-frame id="invoice_preview">
+          <%= render "preview", preview: @preview, timesheet: @timesheet %>
+        </turbo-frame>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,201 @@
+<% content_for :title, "Profit & taxes · time_logix" %>
+<% currency = current_user.default_currency %>
+
+<div class="page-head">
+  <div>
+    <h1>Profit &amp; taxes</h1>
+    <div class="page-head__meta">
+      <%= @year %> · income by invoice date, expenses by the date incurred
+    </div>
+  </div>
+  <div class="page-actions">
+    <%= form_with url: reports_path, method: :get, class: "row",
+          data: { controller: "form-auto-submit", action: "change->form-auto-submit#submit" } do |form| %>
+      <%= form.select :year, @years, { selected: @year } %>
+      <%= form.submit "View", class: "btn btn--sm" %>
+    <% end %>
+    <%= link_to "Expenses", expenses_path(year: @year), class: "btn" %>
+  </div>
+</div>
+
+<div class="stack">
+  <div class="grid grid--stats">
+    <div class="card stat">
+      <div class="stat__label">Invoiced</div>
+      <div class="stat__value"><%= money(@summary.income, currency) %></div>
+      <div class="stat__hint">
+        <%= money(@summary.received, currency) %> received ·
+        <%= @summary.invoice_count %> <%= "invoice".pluralize(@summary.invoice_count) %>
+      </div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Expenses</div>
+      <div class="stat__value"><%= money(@summary.expenses, currency) %></div>
+      <div class="stat__hint"><%= @summary.expense_count %> <%= "entry".pluralize(@summary.expense_count) %></div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Net profit</div>
+      <div class="stat__value"><%= money(@summary.net_profit, currency) %></div>
+      <div class="stat__hint">Invoiced minus expenses</div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Set aside for tax</div>
+      <div class="stat__value"><%= money(@summary.set_aside, currency) %></div>
+      <div class="stat__hint">
+        <%= number_to_percentage(@summary.set_aside_percent, precision: 0) %> of net profit ·
+        <%= link_to "change", edit_profile_path %>
+      </div>
+    </div>
+  </div>
+
+  <% quarter = @summary.next_quarter %>
+  <div class="card">
+    <div class="card__header">
+      <h2>Next estimated payment</h2>
+      <%= link_to "Expenses", expenses_path(year: @year), class: "btn btn--sm btn--ghost" %>
+    </div>
+    <div class="card__body">
+      <div class="row row--between">
+        <div>
+          <div style="font-size:1.15rem; font-weight:650">
+            <%= quarter.label %> · due <%= date_label(quarter.due_on) %>
+          </div>
+          <div class="muted small">
+            Covers <%= date_label(quarter.range.first) %> – <%= date_label(quarter.range.last) %>
+            · <%= money(quarter.income, currency) %> in, <%= money(quarter.expenses, currency) %> out
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="stat__label">Hold back</div>
+          <div style="font-size:1.4rem; font-weight:700">
+            <%= money(@summary.set_aside_for(quarter.net), currency) %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__header">
+      <h2>Estimated tax instalments · <%= @year %></h2>
+      <span class="muted small">US federal schedule</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Quarter</th>
+            <th>Period</th>
+            <th class="num">Income</th>
+            <th class="num">Expenses</th>
+            <th class="num">Net</th>
+            <th class="num">Hold back</th>
+            <th>Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @summary.quarters.each do |row| %>
+            <tr>
+              <td><strong><%= row.label %></strong></td>
+              <td class="muted nowrap">
+                <%= row.range.first.strftime("%b %-d") %> – <%= row.range.last.strftime("%b %-d") %>
+              </td>
+              <td class="num tabular"><%= money(row.income, currency) %></td>
+              <td class="num tabular"><%= money(row.expenses, currency) %></td>
+              <td class="num tabular"><%= money(row.net, currency) %></td>
+              <td class="num-strong"><%= money(@summary.set_aside_for(row.net), currency) %></td>
+              <td class="nowrap <%= "muted" if row.overdue? %>">
+                <%= date_label(row.due_on) %><%= " · past" if row.overdue? %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2">Year total</td>
+            <td class="num tabular"><%= money(@summary.income, currency) %></td>
+            <td class="num tabular"><%= money(@summary.expenses, currency) %></td>
+            <td class="num tabular"><%= money(@summary.net_profit, currency) %></td>
+            <td class="num tabular"><%= money(@summary.set_aside, currency) %></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="card__footer muted small">
+      The instalments cover uneven periods — the IRS quarters are not calendar quarters, and the
+      fourth is due the following January. Figures are a planning aid, not tax advice.
+    </div>
+  </div>
+
+  <div class="grid grid--2">
+    <div class="card">
+      <div class="card__header">
+        <h2>Income by client</h2>
+        <span class="muted small"><%= money(@summary.income, currency) %></span>
+      </div>
+      <% if @summary.income_by_client.any? %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th class="num">Invoiced</th>
+                <th class="num">Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @summary.income_by_client.each do |name, total| %>
+                <tr>
+                  <td><%= name %></td>
+                  <td class="num tabular"><%= money(total, currency) %></td>
+                  <td class="num tabular">
+                    <%= @summary.income.positive? ? number_to_percentage(total / @summary.income * 100, precision: 0) : "—" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty"><p>No invoices issued in <%= @year %>.</p></div>
+      <% end %>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <h2>Expenses by category</h2>
+        <span class="muted small"><%= money(@summary.expenses, currency) %></span>
+      </div>
+      <% if @summary.expenses_by_category.any? %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="num">Total</th>
+                <th class="num">Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @summary.expenses_by_category.each do |category, total| %>
+                <tr>
+                  <td><%= category %></td>
+                  <td class="num tabular"><%= money(total, currency) %></td>
+                  <td class="num tabular">
+                    <%= @summary.expenses.positive? ? number_to_percentage(total / @summary.expenses * 100, precision: 0) : "—" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="empty">
+          <p>No expenses recorded in <%= @year %>.</p>
+          <%= link_to "Add an expense", new_expense_path, class: "btn btn--primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

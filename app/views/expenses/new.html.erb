@@ -1,0 +1,14 @@
+<% content_for :title, "New expense · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>New expense</h1>
+    <div class="page-head__meta">Recorded for your own books and tax reporting — never invoiced.</div>
+  </div>
+</div>
+
+<div class="card" style="max-width:760px">
+  <div class="card__body">
+    <%= render "form", expense: @expense, clients: @clients, submit_label: "Add expense" %>
+  </div>
+</div>

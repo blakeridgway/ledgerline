@@ -1,0 +1,24 @@
+<%
+  money = ->(value) { ActiveSupport::NumberHelper.number_to_currency(value, unit: @client.currency_symbol) }
+%>
+Hi <%= @client.company.presence || @client.name %>,
+
+<% if @reminder %>
+<% if @invoice.overdue? %>Invoice <%= @invoice.number %> for <%= money.call(@invoice.total) %> was due on <%= @invoice.due_on.strftime("%b %-d, %Y") %> and is now <%= @invoice.days_overdue %> <%= "day".pluralize(@invoice.days_overdue) %> overdue.<% else %>A quick reminder that invoice <%= @invoice.number %> for <%= money.call(@invoice.total) %> is due on <%= @invoice.due_on.strftime("%b %-d, %Y") %>.<% end %>
+A copy is attached for your records.
+<% else %>
+Please find invoice <%= @invoice.number %> attached, covering <%= @invoice.period_label %>.
+<% end %>
+
+Amount: <%= money.call(@invoice.total) %>
+Due:    <%= @invoice.due_on&.strftime("%b %-d, %Y") %>
+Period: <%= @invoice.period_label %>
+<% if @user.payment_instructions.present? %>
+Payment instructions
+--------------------
+<%= @user.payment_instructions %>
+<% end %>
+
+Thanks,
+<%= @user.billing_name %>
+<% if @user.phone.present? %><%= @user.phone %><% end %>

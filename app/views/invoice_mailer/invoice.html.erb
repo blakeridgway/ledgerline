@@ -1,0 +1,54 @@
+<%
+  currency = @client.effective_currency
+  money = ->(value) { ActiveSupport::NumberHelper.number_to_currency(value, unit: @client.currency_symbol) }
+%>
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.5; color: #1f2933;">
+  <p>Hi <%= @client.company.presence || @client.name %>,</p>
+
+  <% if @reminder %>
+    <% if @invoice.overdue? %>
+      <p>
+        Invoice <strong><%= @invoice.number %></strong> for <%= money.call(@invoice.total) %>
+        was due on <%= @invoice.due_on.strftime("%b %-d, %Y") %> and is now
+        <strong><%= @invoice.days_overdue %> <%= "day".pluralize(@invoice.days_overdue) %> overdue</strong>.
+      </p>
+    <% else %>
+      <p>
+        A quick reminder that invoice <strong><%= @invoice.number %></strong> for
+        <%= money.call(@invoice.total) %> is due on <%= @invoice.due_on.strftime("%b %-d, %Y") %>.
+      </p>
+    <% end %>
+    <p>A copy is attached for your records.</p>
+  <% else %>
+    <p>
+      Please find invoice <strong><%= @invoice.number %></strong> attached, covering
+      <%= @invoice.period_label %>.
+    </p>
+  <% end %>
+
+  <table style="border-collapse: collapse; margin: 1.25rem 0;">
+    <tr>
+      <td style="padding: 4px 16px 4px 0; color: #6b7a88;">Amount</td>
+      <td style="padding: 4px 0; font-weight: 600;"><%= money.call(@invoice.total) %></td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 16px 4px 0; color: #6b7a88;">Due</td>
+      <td style="padding: 4px 0;"><%= @invoice.due_on&.strftime("%b %-d, %Y") %></td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 16px 4px 0; color: #6b7a88;">Period</td>
+      <td style="padding: 4px 0;"><%= @invoice.period_label %></td>
+    </tr>
+  </table>
+
+  <% if @user.payment_instructions.present? %>
+    <p style="margin-bottom: 4px;"><strong>Payment instructions</strong></p>
+    <p style="margin-top: 0; white-space: pre-line;"><%= @user.payment_instructions %></p>
+  <% end %>
+
+  <p>
+    Thanks,<br>
+    <%= @user.billing_name %>
+    <% if @user.phone.present? %><br><span style="color: #6b7a88;"><%= @user.phone %></span><% end %>
+  </p>
+</div>

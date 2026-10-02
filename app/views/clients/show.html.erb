@@ -1,0 +1,254 @@
+<% content_for :title, "#{@client.display_name} · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1><%= @client.display_name %></h1>
+    <div class="page-head__meta row">
+      <span class="badge <%= @client.hourly? ? "badge--info" : "badge--neutral" %>"><%= @client.billing_type.titleize %></span>
+      <span class="badge <%= @client.active? ? "badge--success" : "badge--muted" %>"><%= @client.active? ? "Active" : "Archived" %></span>
+      <span class="tabular"><%= @client.rate_label %></span>
+    </div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "New invoice", new_invoice_path(client_id: @client.id), class: "btn btn--primary" %>
+    <%= link_to "Edit client", edit_client_path(@client), class: "btn" %>
+    <% if @client.active? %>
+      <%= button_to "Archive", client_path(@client), method: :patch,
+            params: { client: { active: false } }, class: "btn" %>
+    <% else %>
+      <%= button_to "Restore", client_path(@client), method: :patch,
+            params: { client: { active: true } }, class: "btn" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="stack">
+  <div class="grid grid--stats">
+    <div class="card stat">
+      <div class="stat__label">Unbilled hours</div>
+      <div class="stat__value"><%= hours_label(@unbilled_hours) %></div>
+      <div class="stat__hint"><%= @unbilled_entries.size %> entr<%= @unbilled_entries.size == 1 ? "y" : "ies" %> not yet invoiced</div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Hours this month</div>
+      <div class="stat__value"><%= hours_label(@timesheet.total_hours) %></div>
+      <div class="stat__hint">
+        <% if @client.hours_target? %>
+          of <%= hours_label(@client.expected_hours_per_month) %> expected
+        <% else %>
+          <%= @month_range.first.strftime("%B %Y") %>
+        <% end %>
+      </div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Billed to date</div>
+      <div class="stat__value"><%= money(@billed_to_date, @client.effective_currency) %></div>
+      <div class="stat__hint">Excludes voided invoices</div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Invoices</div>
+      <div class="stat__value"><%= @client.invoices.count %></div>
+      <div class="stat__hint"><%= @client.invoices.open_invoices.count %> open</div>
+    </div>
+  </div>
+
+  <% if @client.monthly? %>
+    <div class="card">
+      <div class="card__header">
+        <h2>Retainer · <%= @timesheet.month_label %></h2>
+        <div class="row">
+          <%= link_to "Timesheet", timesheet_client_path(@client), class: "btn btn--sm" %>
+          <%= link_to "Timesheet PDF", timesheet_client_path(@client, format: :pdf), class: "btn btn--sm btn--ghost" %>
+        </div>
+      </div>
+      <div class="card__body">
+        <% if @client.hours_target? %>
+          <div class="row row--between" style="margin-bottom:0.6rem">
+            <span>
+              <strong><%= hours_label(@timesheet.total_hours) %></strong>
+              of <%= hours_label(@client.expected_hours_per_month) %> hours
+              · <%= retainer_remaining_text(@timesheet) %>
+            </span>
+            <span class="muted small">
+              <%= money(@client.monthly_rate, @client.effective_currency) %>/mo
+              · <%= money(@client.effective_hourly_rate, @client.effective_currency) %>/hr
+              over <%= hours_label(@client.expected_hours_per_month) %> hrs
+            </span>
+          </div>
+          <%= retainer_progress_bar(@timesheet) %>
+        <% else %>
+          <p class="small" style="margin:0">
+            <strong><%= hours_label(@timesheet.total_hours) %></strong> hours logged in <%= @timesheet.month_label %>.
+          </p>
+          <p class="muted small" style="margin:0.35rem 0 0">
+            No hours commitment set, so there is nothing to measure against.
+            <%= link_to "Set expected hours", edit_client_path(@client) %> to track progress and build a timesheet.
+          </p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="grid grid--2">
+    <div class="card">
+      <div class="card__header"><h2>Client details</h2></div>
+      <div class="card__body">
+        <dl class="def-list">
+          <dt>Name</dt><dd><%= @client.name %></dd>
+          <% if @client.company.present? %>
+            <dt>Contact</dt><dd><%= @client.company %></dd>
+          <% end %>
+          <dt>Email</dt><dd><%= @client.email.presence || "—" %></dd>
+          <dt>Phone</dt><dd><%= @client.phone.presence || "—" %></dd>
+          <dt>Address</dt>
+          <dd><%= simple_format(@client.address.presence || "—", {}, wrapper_tag: "span") %></dd>
+          <dt>Currency</dt><dd><%= @client.effective_currency %></dd>
+          <dt>Notes</dt><dd><%= simple_format(@client.notes.presence || "—", {}, wrapper_tag: "span") %></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <h2>Log time for <%= @client.display_name %></h2>
+      </div>
+      <div class="card__body">
+        <%= render "shared/time_entry_form",
+              time_entry: @client.time_entries.new(worked_on: Date.current, billable: true),
+              clients: [ @client ],
+              return_to: client_path(@client),
+              submit_label: "Log time" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__header">
+      <h2>Unbilled time</h2>
+      <span class="muted small"><%= hours_label(@unbilled_hours) %> hours · <%= money(@client.hourly? ? @unbilled_hours.to_d * @client.hourly_rate.to_d : 0, @client.effective_currency) %></span>
+    </div>
+    <% if @unbilled_entries.any? %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Work</th>
+              <th class="num">Hours</th>
+              <th class="num">Value</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @unbilled_entries.each do |entry| %>
+              <tr>
+                <td class="nowrap"><%= date_label(entry.worked_on) %></td>
+                <td><%= entry.summary %></td>
+                <td class="num tabular"><%= hours_label(entry.hours) %></td>
+                <td class="num tabular"><%= money(entry.amount, @client.effective_currency) %></td>
+                <td class="nowrap"><%= link_to "Edit", edit_time_entry_path(entry), class: "btn btn--sm btn--ghost" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">Total unbilled</td>
+              <td class="num tabular"><%= hours_label(@unbilled_hours) %></td>
+              <td class="num tabular"><%= money(@client.hourly? ? @unbilled_hours.to_d * @client.hourly_rate.to_d : 0, @client.effective_currency) %></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty">
+        <p>Nothing unbilled for this client.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <div class="card__header">
+      <h2>Invoices</h2>
+      <%= link_to "All invoices", invoices_path, class: "btn btn--sm btn--ghost" %>
+    </div>
+    <% if @invoices.any? %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Number</th>
+              <th>Period</th>
+              <th>Status</th>
+              <th class="num">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @invoices.each do |invoice| %>
+              <tr>
+                <td class="mono"><%= link_to invoice.number, invoice_path(invoice) %></td>
+                <td class="muted nowrap"><%= invoice.period_label %></td>
+                <td><%= invoice_status_badge(invoice.status) %></td>
+                <td class="num tabular"><%= money(invoice.total, @client.effective_currency) %></td>
+                <td class="nowrap"><%= link_to "PDF", invoice_path(invoice, format: :pdf), class: "btn btn--sm btn--ghost" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty">
+        <p>No invoices for this client yet.</p>
+        <%= link_to "Create an invoice", new_invoice_path(client_id: @client.id), class: "btn btn--primary" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <div class="card__header">
+      <h2>Time entries</h2>
+      <%= link_to "Filtered view", time_entries_path(client_id: @client.id), class: "btn btn--sm btn--ghost" %>
+    </div>
+    <% if @time_entries.any? %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Work</th>
+              <th>Status</th>
+              <th class="num">Hours</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @time_entries.each do |entry| %>
+              <tr>
+                <td class="nowrap"><%= date_label(entry.worked_on) %></td>
+                <td>
+                  <%= entry.summary %>
+                  <% unless entry.billable? %><span class="badge badge--muted">Non-billable</span><% end %>
+                </td>
+                <td>
+                  <% if entry.invoice_id.present? %>
+                    <%= link_to entry.invoice.number, invoice_path(entry.invoice), class: "mono" %>
+                  <% else %>
+                    <span class="badge badge--neutral">Unbilled</span>
+                  <% end %>
+                </td>
+                <td class="num tabular"><%= hours_label(entry.hours) %></td>
+                <td class="nowrap"><%= link_to "Edit", edit_time_entry_path(entry), class: "btn btn--sm btn--ghost" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination" %>
+    <% else %>
+      <div class="empty">
+        <p>No time logged for this client yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

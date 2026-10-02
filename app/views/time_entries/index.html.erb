@@ -1,0 +1,127 @@
+<% content_for :title, "Time · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Time</h1>
+    <div class="page-head__meta">
+      <%= hours_label(@filtered_hours) %> hours ·
+      <%= money(@filtered_value, current_user.default_currency) %> billable value
+    </div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Log a week", batch_time_entries_path, class: "btn btn--primary" %>
+    <%= link_to "New invoice", new_invoice_path, class: "btn" %>
+  </div>
+</div>
+
+<div class="stack">
+  <div class="card">
+    <div class="card__header"><h2>Log time</h2></div>
+    <div class="card__body">
+      <% if @clients.any? %>
+        <%= render "shared/time_entry_form",
+              time_entry: @time_entry,
+              clients: @clients,
+              return_to: request.fullpath,
+              show_timer: true %>
+      <% else %>
+        <div class="empty">
+          <h3>No clients yet</h3>
+          <p>You need a client before you can log time.</p>
+          <%= link_to "Add a client", new_client_path, class: "btn btn--primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__body">
+      <%= form_with url: time_entries_path, method: :get, class: "filters" do |form| %>
+        <div class="field">
+          <%= form.label :client_id, "Client" %>
+          <%= form.collection_select :client_id, @clients, :id, :display_name,
+                { include_blank: "All clients", selected: @filters[:client_id] } %>
+        </div>
+        <div class="field">
+          <%= form.label :from, "From" %>
+          <%= form.date_field :from, value: @filters[:from] %>
+        </div>
+        <div class="field">
+          <%= form.label :to, "To" %>
+          <%= form.date_field :to, value: @filters[:to] %>
+        </div>
+        <div class="field">
+          <%= form.label :status, "Billing status" %>
+          <%= form.select :status,
+                [ [ "All", "all" ], [ "Unbilled", "unbilled" ], [ "Billed", "billed" ] ],
+                { selected: @filters[:status] || "all" } %>
+        </div>
+        <div class="form-actions">
+          <%= form.submit "Filter", class: "btn" %>
+          <%= link_to "Clear", time_entries_path, class: "btn btn--ghost" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__header">
+      <h2>Entries</h2>
+      <span class="muted small"><%= @total_count %> matching</span>
+    </div>
+    <% if @time_entries.any? %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Client</th>
+              <th>Work</th>
+              <th>Status</th>
+              <th class="num">Hours</th>
+              <th class="num">Value</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @time_entries.each do |entry| %>
+              <tr>
+                <td class="nowrap"><%= date_label(entry.worked_on) %></td>
+                <td><%= link_to entry.display_name, client_path(entry.client) %></td>
+                <td>
+                  <%= entry.summary %>
+                  <% unless entry.billable? %><span class="badge badge--muted">Non-billable</span><% end %>
+                </td>
+                <td>
+                  <% if entry.invoice_id.present? %>
+                    <%= link_to entry.invoice.number, invoice_path(entry.invoice), class: "mono" %>
+                  <% else %>
+                    <span class="badge badge--neutral">Unbilled</span>
+                  <% end %>
+                </td>
+                <td class="num tabular"><%= hours_label(entry.hours) %></td>
+                <td class="num tabular"><%= money(entry.amount, entry.client.effective_currency) %></td>
+                <td class="nowrap">
+                  <% if entry.invoice_id.nil? %>
+                    <%= link_to "Edit", edit_time_entry_path(entry), class: "btn btn--sm btn--ghost" %>
+                    <%= button_to "Delete", time_entry_path(entry), method: :delete,
+                          class: "btn btn--sm btn--danger",
+                          form: { data: { turbo_confirm: "Delete this time entry?" } } %>
+                  <% else %>
+                    <span class="muted small">Locked</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination" %>
+    <% else %>
+      <div class="empty">
+        <h3>No entries found</h3>
+        <p><%= @filters.values.compact.any? ? "Try widening your filters." : "Log your first hours above." %></p>
+      </div>
+    <% end %>
+  </div>
+</div>

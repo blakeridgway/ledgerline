@@ -1,0 +1,86 @@
+<% content_for :title, "Edit business details · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Edit business details</h1>
+    <div class="page-head__meta">These appear on the invoices you send.</div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Cancel", profile_path, class: "btn" %>
+  </div>
+</div>
+
+<div class="card" style="max-width:760px">
+  <div class="card__body">
+    <%= form_with model: @user, url: profile_path, method: :patch, class: "form" do |form| %>
+      <%= render "shared/errors", object: @user %>
+
+      <div class="form__row">
+        <div class="field">
+          <%= form.label :business_name, "Business name" %>
+          <%= form.text_field :business_name, placeholder: "Blake Consulting LLC" %>
+        </div>
+        <div class="field">
+          <%= form.label :name, "Your name" %>
+          <%= form.text_field :name, placeholder: "Blake Smith" %>
+        </div>
+      </div>
+
+      <div class="form__row">
+        <div class="field">
+          <%= form.label :email_address, "Email" %>
+          <%= form.email_field :email_address, required: true %>
+        </div>
+        <div class="field">
+          <%= form.label :phone, "Phone" %>
+          <%= form.telephone_field :phone %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= form.label :address, "Address" %>
+        <%= form.text_area :address, rows: 3, placeholder: "1 Main St, Suite 200\nAustin, TX 78701" %>
+      </div>
+
+      <div class="form__row">
+        <div class="field">
+          <%= form.label :tax_id, "Tax ID / EIN" %>
+          <%= form.text_field :tax_id %>
+        </div>
+        <div class="field">
+          <%= form.label :default_currency, "Default currency" %>
+          <%= form.text_field :default_currency, maxlength: 3 %>
+        </div>
+        <div class="field">
+          <%= form.label :default_payment_terms_days, "Payment terms (days)" %>
+          <%= form.number_field :default_payment_terms_days, min: 0, step: 1 %>
+        </div>
+        <div class="field">
+          <%= form.label :expected_hours_per_month, "Retainer hours / month" %>
+          <%= form.number_field :expected_hours_per_month, min: 0, step: "0.25", placeholder: "160.00" %>
+          <span class="hint">Default for new monthly clients. 160 = full time. Set 0 to leave it unset.</span>
+        </div>
+        <div class="field">
+          <%= form.label :tax_set_aside_percent, "Tax set-aside %" %>
+          <%= form.number_field :tax_set_aside_percent, min: 0, max: 100, step: "0.5" %>
+          <span class="hint">Share of net profit to hold back for quarterly estimated taxes.</span>
+        </div>
+        <div class="field">
+          <%= form.label :invoice_prefix, "Invoice prefix" %>
+          <%= form.text_field :invoice_prefix, required: true, maxlength: 12 %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= form.label :payment_instructions, "Payment instructions" %>
+        <%= form.text_area :payment_instructions, rows: 4,
+              placeholder: "ACH: Routing 000000000 / Account 000000000\nor pay via Stripe invoice." %>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Save details", class: "btn btn--primary" %>
+        <%= link_to "Cancel", profile_path, class: "btn btn--ghost" %>
+      </div>
+    <% end %>
+  </div>
+</div>

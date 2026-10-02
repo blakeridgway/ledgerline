@@ -1,0 +1,83 @@
+<% submit_label = local_assigns.fetch(:submit_label, "Save client") %>
+
+<%= form_with model: client, class: "form", data: { controller: "billing" } do |form| %>
+  <%= render "shared/errors", object: client %>
+
+  <div class="form__row">
+    <div class="field">
+      <%= form.label :name, "Name" %>
+      <%= form.text_field :name, required: true, placeholder: "Acme Corp" %>
+      <span class="hint">Shown first in lists. Use the legal entity name if you bill it.</span>
+    </div>
+
+    <div class="field">
+      <%= form.label :company, "Contact / department" %>
+      <%= form.text_field :company, placeholder: "Accounts Payable" %>
+      <span class="hint">Optional. Displayed on invoices when present.</span>
+    </div>
+  </div>
+
+  <div class="form__row">
+    <div class="field">
+      <%= form.label :email, "Billing email" %>
+      <%= form.email_field :email, placeholder: "ap@acme.com" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :phone, "Phone" %>
+      <%= form.telephone_field :phone %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :address, "Billing address" %>
+    <%= form.text_area :address, rows: 3, placeholder: "1 Market St\nSan Francisco, CA 94103" %>
+  </div>
+
+  <div class="form__row">
+    <div class="field">
+      <%= form.label :billing_type, "Billing type" %>
+      <%= form.select :billing_type,
+            [ [ "Hourly — bill tracked time", "hourly" ], [ "Monthly — flat retainer", "monthly" ] ],
+            {},
+            data: { billing_target: "billingType", action: "billing#update" } %>
+    </div>
+
+    <div class="field" data-billing-target="hourly">
+      <%= form.label :hourly_rate, "Hourly rate" %>
+      <%= form.number_field :hourly_rate, step: "0.01", min: 0, placeholder: "150.00" %>
+      <span class="hint">Applied to each billable hour.</span>
+    </div>
+
+    <div class="field" data-billing-target="monthly">
+      <%= form.label :monthly_rate, "Monthly retainer" %>
+      <%= form.number_field :monthly_rate, step: "0.01", min: 0, placeholder: "5000.00" %>
+      <span class="hint">Billed once per invoice period, regardless of hours logged.</span>
+    </div>
+
+    <div class="field" data-billing-target="monthly">
+      <%= form.label :expected_hours_per_month, "Expected hours / month" %>
+      <%= form.number_field :expected_hours_per_month, step: "0.25", min: 0, placeholder: "160.00" %>
+      <span class="hint">The commitment you have to log, e.g. 160 for full time. Drives progress tracking and the timesheet.</span>
+    </div>
+
+    <div class="field">
+      <%= form.label :currency, "Currency" %>
+      <%= form.text_field :currency, maxlength: 3, placeholder: "USD" %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :notes, "Notes" %>
+    <%= form.text_area :notes, rows: 3, placeholder: "PO number, invoicing quirks, rate escalations…" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit submit_label, class: "btn btn--primary" %>
+    <span class="field--inline">
+      <%= form.check_box :active %>
+      <%= form.label :active, "Active" %>
+    </span>
+    <%= link_to "Cancel", client.persisted? ? client_path(client) : clients_path, class: "btn btn--ghost" %>
+  </div>
+<% end %>

@@ -1,0 +1,246 @@
+<% content_for :title, "Dashboard · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <div class="page-head__meta"><%= @month_range.first.strftime("%B %Y") %> · signed in as <%= current_user.email_address %></div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "New invoice", new_invoice_path, class: "btn" %>
+    <%= link_to "Add client", new_client_path, class: "btn" %>
+  </div>
+</div>
+
+<div class="stack">
+  <div class="grid grid--stats">
+    <div class="card stat">
+      <div class="stat__label">Unbilled hours</div>
+      <div class="stat__value"><%= hours_label(@unbilled_hours) %></div>
+      <div class="stat__hint">Hourly clients waiting to be invoiced</div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Unbilled value</div>
+      <div class="stat__value"><%= money(@unbilled_value, current_user.default_currency) %></div>
+      <div class="stat__hint">Hourly clients only</div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Hours this month</div>
+      <div class="stat__value"><%= hours_label(@hours_this_month) %></div>
+      <div class="stat__hint"><%= @month_range.first.strftime("%B") %></div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Invoiced this month</div>
+      <div class="stat__value"><%= money(@invoiced_this_month, current_user.default_currency) %></div>
+      <div class="stat__hint"><%= @open_count %> open invoice<%= "s" unless @open_count == 1 %></div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Outstanding</div>
+      <div class="stat__value"><%= money(@outstanding_total, current_user.default_currency) %></div>
+      <div class="stat__hint">
+        <% if @overdue_count.positive? %>
+          <span class="badge badge--danger"><%= @overdue_count %> overdue</span>
+          <%= money(@overdue_total, current_user.default_currency) %> late
+        <% else %>
+          Draft and sent invoices
+        <% end %>
+      </div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Net profit YTD</div>
+      <div class="stat__value"><%= money(@summary.net_profit, current_user.default_currency) %></div>
+      <div class="stat__hint">
+        <%= money(@summary.income, current_user.default_currency) %> in ·
+        <%= money(@summary.expenses, current_user.default_currency) %> out
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid--2">
+    <div class="stack">
+      <div class="card">
+        <div class="card__header">
+          <h2>Log time</h2>
+          <div class="row">
+            <%= link_to "Log a week", batch_time_entries_path, class: "btn btn--sm" %>
+            <%= link_to "All entries", time_entries_path, class: "btn btn--sm btn--ghost" %>
+          </div>
+        </div>
+        <div class="card__body">
+          <% if @active_clients.any? %>
+            <%= render "shared/time_entry_form",
+                  time_entry: @time_entry,
+                  clients: current_user.clients.alphabetical,
+                  return_to: root_path,
+                  show_timer: true %>
+          <% else %>
+            <div class="empty">
+              <h3>No clients yet</h3>
+              <p>Add a client before you start logging time.</p>
+              <%= link_to "Add your first client", new_client_path, class: "btn btn--primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__header">
+          <h2>Recent time</h2>
+          <%= link_to "View all", time_entries_path, class: "btn btn--sm btn--ghost" %>
+        </div>
+        <% if @recent_entries.any? %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Client</th>
+                  <th>Work</th>
+                  <th class="num">Hours</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @recent_entries.each do |entry| %>
+                  <tr>
+                    <td class="nowrap"><%= date_label(entry.worked_on) %></td>
+                    <td><%= link_to entry.display_name, client_path(entry.client) %></td>
+                    <td class="muted"><%= truncate(entry.summary, length: 46) %></td>
+                    <td class="num tabular"><%= hours_label(entry.hours) %></td>
+                    <td class="nowrap">
+                      <% if entry.invoice_id.present? %>
+                        <%= link_to "Invoice", invoice_path(entry.invoice_id), class: "btn btn--sm btn--ghost" %>
+                      <% else %>
+                        <%= link_to "Edit", edit_time_entry_path(entry), class: "btn btn--sm btn--ghost" %>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="empty">
+            <h3>No time logged yet</h3>
+            <p>Use the form above to record your first hours.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card__header">
+          <h2>Retainers · <%= @month_range.first.strftime("%B") %></h2>
+          <%= link_to "Manage", clients_path, class: "btn btn--sm btn--ghost" %>
+        </div>
+        <% if @retainers.any? %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Progress</th>
+                  <th class="num">Retainer</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @retainers.each do |sheet| %>
+                  <tr>
+                    <td><%= link_to sheet.client.display_name, client_path(sheet.client) %></td>
+                    <td>
+                      <% if sheet.target? %>
+                        <div class="progress-cell">
+                          <span class="progress-cell__label">
+                            <strong><%= hours_label(sheet.total_hours) %></strong> / <%= hours_label(sheet.expected_hours) %> hrs
+                            · <%= retainer_remaining_text(sheet) %>
+                          </span>
+                          <%= retainer_progress_bar(sheet) %>
+                        </div>
+                      <% else %>
+                        <span class="tabular"><%= hours_label(sheet.total_hours) %> hrs</span>
+                      <% end %>
+                    </td>
+                    <td class="num tabular"><%= money(sheet.client.monthly_rate, sheet.client.effective_currency) %></td>
+                    <td class="nowrap">
+                      <%= link_to "Timesheet", timesheet_client_path(sheet.client), class: "btn btn--sm btn--ghost" %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="empty">
+            <p>No monthly retainer clients.</p>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="card">
+        <div class="card__header">
+          <h2>Open invoices</h2>
+          <div class="row">
+            <% if @overdue_count.positive? %>
+              <span class="badge badge--danger"><%= @overdue_count %> overdue</span>
+            <% end %>
+            <%= link_to "All invoices", invoices_path, class: "btn btn--sm btn--ghost" %>
+          </div>
+        </div>
+        <% if @open_invoices.any? %>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Number</th>
+                  <th>Client</th>
+                  <th>Due</th>
+                  <th class="num">Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @open_invoices.each do |invoice| %>
+                  <tr>
+                    <td class="mono"><%= link_to invoice.number, invoice_path(invoice) %></td>
+                    <td><%= invoice.client.display_name %></td>
+                    <td class="nowrap"><%= invoice_due_label(invoice) %></td>
+                    <td class="num tabular"><%= money(invoice.total, invoice.client.effective_currency) %></td>
+                    <td class="nowrap">
+                      <% if invoice.sent? %>
+                        <%= button_to "Remind", remind_invoice_path(invoice), class: "btn btn--sm" %>
+                      <% else %>
+                        <%= link_to "Review", invoice_path(invoice), class: "btn btn--sm btn--ghost" %>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <div class="empty">
+            <p>Nothing outstanding. Nice.</p>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="card">
+        <div class="card__header">
+          <h2>Clients</h2>
+        </div>
+        <div class="card__body">
+          <% if @active_clients.any? %>
+            <div class="row">
+              <% @active_clients.each do |client| %>
+                <%= link_to client.display_name, client_path(client), class: "btn btn--sm" %>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="muted small">No active clients yet.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,23 @@
+acme_old_hourly_line:
+  invoice: acme_old_paid
+  kind: hourly
+  description: Data model review
+  quantity: 8
+  unit_rate: 150
+  amount: 1200
+
+acme_old_draft_line:
+  invoice: acme_old_draft
+  kind: hourly
+  description: Follow-up work
+  quantity: 3
+  unit_rate: 150
+  amount: 450
+
+rival_old_draft_line:
+  invoice: rival_old_draft
+  kind: hourly
+  description: Other tenant work
+  quantity: 3.33
+  unit_rate: 90
+  amount: 300

@@ -1,0 +1,24 @@
+software:
+  user: blake
+  spent_on: <%= Date.current.beginning_of_year + 10.days %>
+  vendor: Figma
+  category: Software and subscriptions
+  amount: 45
+  notes: Design tooling
+
+travel:
+  user: blake
+  client: acme
+  spent_on: <%= Date.current.beginning_of_year + 40.days %>
+  vendor: Delta
+  category: Travel
+  amount: 320.50
+  notes: Client onsite
+
+other_user_expense:
+  user: other
+  client: rival
+  spent_on: <%= Date.current.beginning_of_year + 5.days %>
+  vendor: Someone else
+  category: Supplies
+  amount: 99

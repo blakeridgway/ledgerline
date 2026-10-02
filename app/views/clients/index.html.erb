@@ -1,0 +1,69 @@
+<% content_for :title, "Clients · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Clients</h1>
+    <div class="page-head__meta"><%= @active_count %> active · <%= @archived_count %> archived</div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Add client", new_client_path, class: "btn btn--primary" %>
+  </div>
+</div>
+
+<div class="tabs">
+  <%= link_to "Active", clients_path(status: "active"), class: class_names("is-active": @status == "active") %>
+  <%= link_to "Archived", clients_path(status: "archived"), class: class_names("is-active": @status == "archived") %>
+</div>
+
+<div class="card">
+  <% if @clients.any? %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Billing</th>
+            <th class="num">Rate</th>
+            <th class="num">Unbilled</th>
+            <th class="num">This month</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @clients.each do |client| %>
+            <tr>
+              <td>
+                <%= link_to client.display_name, client_path(client) %>
+                <% if client.company.present? && client.company != client.name %>
+                  <div class="muted small"><%= client.name %></div>
+                <% end %>
+              </td>
+              <td>
+                <span class="badge <%= client.hourly? ? "badge--info" : "badge--neutral" %>">
+                  <%= client.billing_type.titleize %>
+                </span>
+              </td>
+              <td class="num tabular"><%= client.rate_label %></td>
+              <td class="num tabular"><%= hours_label(client.unbilled_hours) %></td>
+              <td class="num tabular">
+                <%= hours_label(client.time_entries.in_period(Date.current.all_month).sum(:hours)) %>
+              </td>
+              <td class="nowrap">
+                <%= link_to "Log time", time_entries_path(client_id: client.id), class: "btn btn--sm btn--ghost" %>
+                <%= link_to "Invoice", new_invoice_path(client_id: client.id), class: "btn btn--sm btn--ghost" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty">
+      <h3><%= @status == "archived" ? "No archived clients" : "No clients yet" %></h3>
+      <p><%= @status == "archived" ? "Archived clients stay here for your records." : "Add your first client to start tracking time and billing." %></p>
+      <% if @status == "active" %>
+        <%= link_to "Add client", new_client_path, class: "btn btn--primary" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,17 @@
+<% content_for :title, "Edit expense · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Edit expense</h1>
+    <div class="page-head__meta"><%= @expense.vendor %> · <%= date_label(@expense.spent_on) %></div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Back to expenses", expenses_path(year: @expense.spent_on.year), class: "btn" %>
+  </div>
+</div>
+
+<div class="card" style="max-width:760px">
+  <div class="card__body">
+    <%= render "form", expense: @expense, clients: @clients, submit_label: "Save changes" %>
+  </div>
+</div>

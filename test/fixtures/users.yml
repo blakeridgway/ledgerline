@@ -1,0 +1,26 @@
+<% digest = BCrypt::Password.create("password") %>
+
+blake:
+  email_address: blake@example.com
+  password_digest: <%= digest %>
+  name: Blake
+  business_name: Blake Consulting LLC
+  phone: 512-555-0134
+  address: "1 Main St, Suite 200\nAustin, TX 78701"
+  default_currency: USD
+  default_payment_terms_days: 30
+  invoice_prefix: INV
+  expected_hours_per_month: 160
+  tax_set_aside_percent: 30
+  payment_instructions: "ACH transfer, routing 000000000."
+
+other:
+  email_address: other@example.com
+  password_digest: <%= digest %>
+  name: Sam
+  business_name: Sam Consulting
+  default_currency: USD
+  default_payment_terms_days: 14
+  invoice_prefix: SAM
+  expected_hours_per_month: 0
+  tax_set_aside_percent: 0

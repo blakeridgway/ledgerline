@@ -1,0 +1,136 @@
+<% content_for :title, "Expenses · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Expenses</h1>
+    <div class="page-head__meta">
+      <%= @filters[:year] %> ·
+      <%= money(@filtered_total, current_user.default_currency) %>
+      across <%= @total_count %> <%= "entry".pluralize(@total_count) %>
+    </div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Profit &amp; taxes", reports_path(year: @filters[:year]), class: "btn" %>
+    <%= link_to "Add expense", new_expense_path, class: "btn btn--primary" %>
+  </div>
+</div>
+
+<div class="stack">
+  <div class="card">
+    <div class="card__body">
+      <%= form_with url: expenses_path, method: :get, class: "filters",
+            data: { controller: "form-auto-submit", action: "change->form-auto-submit#submit" } do |form| %>
+        <div class="field">
+          <%= form.label :year, "Year" %>
+          <%= form.select :year, @years, { selected: @filters[:year] } %>
+        </div>
+        <div class="field">
+          <%= form.label :category, "Category" %>
+          <%= form.select :category, Expense::CATEGORIES,
+                { include_blank: "All categories", selected: @filters[:category] } %>
+        </div>
+        <div class="field">
+          <%= form.label :client_id, "Client" %>
+          <%= form.collection_select :client_id, @clients, :id, :display_name,
+                { include_blank: "All clients", selected: @filters[:client_id] } %>
+        </div>
+        <div class="form-actions">
+          <%= form.submit "Filter", class: "btn" %>
+          <%= link_to "Clear", expenses_path, class: "btn btn--ghost" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @by_category.any? %>
+    <div class="card">
+      <div class="card__header">
+        <h2>By category</h2>
+        <span class="muted small"><%= money(@filtered_total, current_user.default_currency) %> total</span>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Share</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @by_category.each do |category, total| %>
+              <% share = @filtered_total.positive? ? (total / @filtered_total * 100).round : 0 %>
+              <tr>
+                <td><%= category %></td>
+                <td>
+                  <div class="progress-cell">
+                    <span class="progress-cell__label"><%= share %>%</span>
+                    <%= progress_bar(share) %>
+                  </div>
+                </td>
+                <td class="num-strong"><%= money(total, current_user.default_currency) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">Total</td>
+              <td class="num tabular"><%= money(@filtered_total, current_user.default_currency) %></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="card">
+    <div class="card__header">
+      <h2>Expenses</h2>
+      <span class="muted small"><%= @total_count %> matching</span>
+    </div>
+    <% if @expenses.any? %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Paid to</th>
+              <th>Category</th>
+              <th>Client</th>
+              <th class="num">Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @expenses.each do |expense| %>
+              <tr>
+                <td class="nowrap"><%= date_label(expense.spent_on) %></td>
+                <td>
+                  <%= expense.vendor %>
+                  <% if expense.notes.present? %>
+                    <div class="muted small"><%= truncate(expense.notes, length: 60) %></div>
+                  <% end %>
+                </td>
+                <td><span class="badge badge--neutral"><%= expense.category %></span></td>
+                <td class="muted"><%= expense.client&.display_name || "—" %></td>
+                <td class="num-strong"><%= money(expense.amount, current_user.default_currency) %></td>
+                <td class="nowrap">
+                  <%= link_to "Edit", edit_expense_path(expense), class: "btn btn--sm btn--ghost" %>
+                  <%= button_to "Delete", expense_path(expense), method: :delete, class: "btn btn--sm btn--danger",
+                        form: { data: { turbo_confirm: "Delete this expense?" } } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination" %>
+    <% else %>
+      <div class="empty">
+        <h3>No expenses<%= " matching those filters" if @filters[:category] || @filters[:client_id] %></h3>
+        <p>Track software, travel, insurance and the rest so your profit figure is real.</p>
+        <%= link_to "Add expense", new_expense_path, class: "btn btn--primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

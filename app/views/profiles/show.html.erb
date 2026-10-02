@@ -1,0 +1,72 @@
+<% content_for :title, "Business details · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Business details</h1>
+    <div class="page-head__meta">Shown in the "from" block of every invoice PDF.</div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Edit details", edit_profile_path, class: "btn btn--primary" %>
+  </div>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <div class="card__header"><h2>Your business</h2></div>
+    <div class="card__body">
+      <dl class="def-list">
+        <dt>Business name</dt><dd><%= current_user.business_name.presence || "—" %></dd>
+        <dt>Your name</dt><dd><%= current_user.name.presence || "—" %></dd>
+        <dt>Email</dt><dd><%= current_user.email_address %></dd>
+        <dt>Phone</dt><dd><%= current_user.phone.presence || "—" %></dd>
+        <dt>Address</dt><dd><%= simple_format(current_user.address.presence || "—", {}, wrapper_tag: "span") %></dd>
+        <dt>Tax ID</dt><dd><%= current_user.tax_id.presence || "—" %></dd>
+        <dt>Currency</dt><dd><%= current_user.default_currency %></dd>
+        <dt>Payment terms</dt><dd><%= current_user.default_payment_terms_days %> days</dd>
+        <dt>Retainer default</dt>
+        <dd>
+          <% if current_user.expected_hours_per_month.positive? %>
+            <%= hours_label(current_user.expected_hours_per_month) %> hrs / month
+          <% else %>
+            —
+          <% end %>
+        </dd>
+        <dt>Invoice prefix</dt><dd class="mono"><%= current_user.invoice_prefix %></dd>
+        <dt>Tax set-aside</dt>
+        <dd><%= number_to_percentage(current_user.tax_set_aside_percent, precision: 0) %> of net profit</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__header"><h2>Payment instructions</h2></div>
+    <div class="card__body">
+      <% if current_user.payment_instructions.present? %>
+        <p class="small"><%= simple_format(current_user.payment_instructions) %></p>
+      <% else %>
+        <p class="muted small">Nothing yet. Add bank or transfer details so clients know how to pay.</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.25rem">
+  <div class="card__header"><h2>Retainer hours</h2></div>
+  <div class="card__body">
+    <p class="small muted" style="margin:0">
+      A monthly client with expected hours (160 for full time) gets progress tracking and a
+      monthly timesheet you can submit alongside the invoice. The retainer stays a flat fee
+      either way — logged hours never change the amount billed.
+    </p>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.25rem">
+  <div class="card__header"><h2>Invoice numbering</h2></div>
+  <div class="card__body">
+    <p class="small muted">
+      Invoices are numbered <span class="mono"><%= current_user.invoice_prefix %>-YYYYMM-000</span>, for example
+      <span class="mono"><%= Invoice.next_number_for(current_user) %></span>. The sequence restarts each month.
+    </p>
+  </div>
+</div>

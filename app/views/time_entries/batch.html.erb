@@ -1,0 +1,137 @@
+<% content_for :title, "Log a week · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Log a week</h1>
+    <div class="page-head__meta">One row per day — save the whole week in one go.</div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Back to time", time_entries_path, class: "btn" %>
+  </div>
+</div>
+
+<% if @clients.empty? %>
+  <div class="card">
+    <div class="empty">
+      <h3>No clients yet</h3>
+      <p>You need a client before you can log time.</p>
+      <%= link_to "Add a client", new_client_path, class: "btn btn--primary" %>
+    </div>
+  </div>
+<% else %>
+  <div class="stack">
+    <div class="card">
+      <div class="card__body">
+        <%= form_with url: batch_time_entries_path, method: :get, class: "form__row",
+              data: { controller: "form-auto-submit", action: "change->form-auto-submit#submit" } do |form| %>
+          <div class="field">
+            <%= form.label :client_id, "Client" %>
+            <%= form.collection_select :client_id, @clients, :id, :display_name, { selected: @client&.id } %>
+          </div>
+
+          <div class="field">
+            <%= form.label :week_start, "Week of" %>
+            <%= form.date_field :week_start, value: @week_start, data: { action: "change->form-auto-submit#submit" } %>
+          </div>
+
+          <div class="field">
+            <span class="hint">Jump to</span>
+            <div class="row">
+              <%= link_to "← Previous", batch_time_entries_path(client_id: @client&.id, week_start: @week_start - 1.week), class: "btn btn--sm" %>
+              <%= link_to "This week", batch_time_entries_path(client_id: @client&.id), class: "btn btn--sm" %>
+              <%= link_to "Next →", batch_time_entries_path(client_id: @client&.id, week_start: @week_start + 1.week), class: "btn btn--sm" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card" data-controller="batch" data-batch-default-hours-value="8">
+      <div class="card__header">
+        <h2><%= @client.display_name %> · week of <%= date_label(@week_start) %></h2>
+        <span class="muted small">
+          <%= hours_label(@logged_by_day.values.sum) %> hrs already logged that week
+        </span>
+      </div>
+
+      <%= form_with url: save_batch_time_entries_path, method: :post do %>
+        <%= hidden_field_tag :client_id, @client&.id %>
+        <%= hidden_field_tag :week_start, @week_start %>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th class="num">Logged</th>
+                <th class="num">Hours to add</th>
+                <th>What did you work on?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @days.each_with_index do |day, index| %>
+                <tr class="<%= "is-weekend" unless day.on_weekday? %>">
+                  <td class="nowrap">
+                    <strong><%= day.strftime("%a") %></strong>
+                    <span class="muted small"><%= day.strftime("%-d %b") %></span>
+                  </td>
+                  <td class="num tabular">
+                    <% logged = @logged_by_day[day] %>
+                    <%= logged.present? ? hours_label(logged) : "—" %>
+                  </td>
+                  <td class="num">
+                    <%= hidden_field_tag "days[#{index}][worked_on]", day %>
+                    <%= number_field_tag "days[#{index}][hours]", nil,
+                          step: 0.25, min: 0, placeholder: "0", class: "input--hours",
+                          data: { batch_target: "hours", weekday: day.on_weekday? } %>
+                  </td>
+                  <td>
+                    <%= text_field_tag "days[#{index}][description]", nil,
+                          placeholder: day.on_weekday? ? "e.g. Platform development" : "" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card__footer">
+          <div class="form-actions">
+            <%= submit_tag "Log hours", class: "btn btn--primary" %>
+            <button type="button" class="btn" data-action="batch#fillWeekdays">Fill weekdays with 8</button>
+            <button type="button" class="btn btn--ghost" data-action="batch#clear">Clear</button>
+            <span class="field--inline">
+              <input type="hidden" name="billable" value="0">
+              <input type="checkbox" name="billable" value="1" id="batch_billable" checked>
+              <label for="batch_billable">Billable</label>
+            </span>
+          </div>
+          <p class="muted small" style="margin:0.6rem 0 0">
+            Hours are added on top of anything already logged for that day; nothing existing is
+            changed or deleted. Leave a day blank to skip it.
+          </p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @timesheet&.target? %>
+      <div class="card">
+        <div class="card__header">
+          <h2>Retainer progress · <%= @timesheet.month_label %></h2>
+          <%= link_to "Timesheet", timesheet_client_path(@client), class: "btn btn--sm btn--ghost" %>
+        </div>
+        <div class="card__body">
+          <div class="row row--between" style="margin-bottom:0.6rem">
+            <span>
+              <strong><%= hours_label(@timesheet.total_hours) %></strong>
+              of <%= hours_label(@timesheet.expected_hours) %> hours
+              · <%= retainer_remaining_text(@timesheet) %>
+            </span>
+            <span class="muted small"><%= @timesheet.days_logged %> days logged</span>
+          </div>
+          <%= retainer_progress_bar(@timesheet) %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

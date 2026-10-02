@@ -1,0 +1,38 @@
+<div class="auth">
+  <div class="auth__card">
+    <div class="auth__brand">
+      <span class="brand__mark">TL</span>
+      <strong style="font-size:1.05rem">time_logix</strong>
+    </div>
+
+    <div class="card">
+      <div class="card__body">
+        <h1>Sign in</h1>
+        <p class="muted small">Track time and invoice your clients.</p>
+
+        <%= render "shared/flash" %>
+
+        <%= form_with url: session_path, class: "form" do |form| %>
+          <div class="field">
+            <%= form.label :email_address, "Email" %>
+            <%= form.email_field :email_address, required: true, autofocus: true,
+                  autocomplete: "username", placeholder: "you@example.com",
+                  value: params[:email_address] %>
+          </div>
+
+          <div class="field">
+            <%= form.label :password, "Password" %>
+            <%= form.password_field :password, required: true,
+                  autocomplete: "current-password", maxlength: 72 %>
+          </div>
+
+          <%= form.submit "Sign in", class: "btn btn--primary btn--block" %>
+        <% end %>
+
+        <p class="small" style="margin:1rem 0 0">
+          <%= link_to "Forgot password?", new_password_path %>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

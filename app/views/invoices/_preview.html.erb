@@ -1,0 +1,94 @@
+<% if preview.nil? %>
+  <p class="muted small">Pick a client to preview what will be invoiced.</p>
+<% else %>
+  <div class="row row--between">
+    <div>
+      <strong><%= preview.client.display_name %></strong>
+      <div class="muted small">
+        <%= preview.client.billing_type.titleize %> ·
+        <%= date_label(preview.period_start) %> – <%= date_label(preview.period_end) %>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div class="stat__label">Invoice total</div>
+      <div style="font-size:1.35rem; font-weight:700">
+        <%= money(preview.amount, preview.client.effective_currency) %>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap" style="margin-top:0.75rem">
+    <table class="table">
+      <thead>
+        <tr>
+          <th><%= preview.hourly? ? "Unbilled entries in range" : "Retainer line" %></th>
+          <th class="num">Hours</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if preview.hourly? %>
+          <% if preview.entries? %>
+            <% preview.entries.each do |entry| %>
+              <tr>
+                <td>
+                  <%= entry.summary %>
+                  <div class="muted small"><%= date_label(entry.worked_on) %></div>
+                </td>
+                <td class="num tabular"><%= hours_label(entry.hours) %></td>
+                <td class="num tabular"><%= money(entry.hours.to_d * preview.client.hourly_rate.to_d, preview.client.effective_currency) %></td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="3" class="muted">No unbilled billable hours in this range.</td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td>Monthly retainer — <%= preview.period_end.strftime("%B %Y") %></td>
+            <td class="num tabular">—</td>
+            <td class="num tabular"><%= money(preview.client.monthly_rate, preview.client.effective_currency) %></td>
+          </tr>
+          <% if local_assigns[:timesheet]&.target? %>
+            <tr>
+              <td colspan="3">
+                <div class="progress-cell">
+                  <span class="progress-cell__label">
+                    <strong><%= hours_label(timesheet.total_hours) %></strong>
+                    / <%= hours_label(timesheet.expected_hours) %> hrs logged
+                    · <%= retainer_remaining_text(timesheet) %>
+                  </span>
+                  <%= retainer_progress_bar(timesheet) %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+          <% if preview.entries? %>
+            <tr>
+              <td class="muted">
+                <%= preview.entries.size %> time entr<%= preview.entries.size == 1 ? "y" : "ies" %>
+                (<%= hours_label(preview.hours) %> h) will be marked billed as covered by the retainer.
+              </td>
+              <td></td>
+              <td></td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Total</td>
+          <td class="num tabular"><%= hours_label(preview.hours) %></td>
+          <td class="num tabular"><%= money(preview.amount, preview.client.effective_currency) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <% unless preview.billable? %>
+    <div class="flash flash--alert" style="margin-top:0.75rem">
+      Nothing billable in this range — creating the invoice will fail. Widen the period or log time first.
+    </div>
+  <% end %>
+<% end %>

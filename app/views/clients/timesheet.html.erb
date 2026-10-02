@@ -1,0 +1,151 @@
+<% content_for :title, "Timesheet · #{@client.display_name}" %>
+
+<div class="page-head">
+  <div>
+    <h1>Timesheet</h1>
+    <div class="page-head__meta row">
+      <span><%= @client.display_name %></span>
+      <span class="muted">·</span>
+      <span class="muted"><%= @timesheet.period_label %></span>
+    </div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Download PDF",
+          timesheet_client_path(@client, month: @timesheet.period_start.strftime("%Y-%m"), format: :pdf),
+          class: "btn btn--primary" %>
+    <%= link_to "Back to client", client_path(@client), class: "btn" %>
+  </div>
+</div>
+
+<div class="stack">
+  <div class="card">
+    <div class="card__body">
+      <%= form_with url: timesheet_client_path(@client), method: :get, class: "row" do |form| %>
+        <div class="field">
+          <%= form.label :month, "Month" %>
+          <%= form.month_field :month, value: @timesheet.period_start.strftime("%Y-%m") %>
+        </div>
+        <div class="form-actions">
+          <%= form.submit "View month", class: "btn" %>
+          <%= link_to "This month", timesheet_client_path(@client), class: "btn btn--ghost" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid--stats">
+    <div class="card stat">
+      <div class="stat__label"><%= @timesheet.target? ? "Expected hours" : "Logged hours" %></div>
+      <div class="stat__value">
+        <%= hours_label(@timesheet.target? ? @timesheet.expected_hours : @timesheet.total_hours) %>
+      </div>
+      <div class="stat__hint"><%= @timesheet.month_label %></div>
+    </div>
+    <% if @timesheet.target? %>
+      <div class="card stat">
+        <div class="stat__label">Logged</div>
+        <div class="stat__value"><%= hours_label(@timesheet.total_hours) %></div>
+        <div class="stat__hint"><%= retainer_remaining_text(@timesheet) %></div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label"><%= @timesheet.over_hours.positive? ? "Over" : "Remaining" %></div>
+        <div class="stat__value">
+          <%= hours_label(@timesheet.over_hours.positive? ? @timesheet.over_hours : @timesheet.remaining_hours) %>
+        </div>
+        <div class="stat__hint"><%= @timesheet.progress_percent %>% of commitment</div>
+      </div>
+    <% else %>
+      <div class="card stat">
+        <div class="stat__label">Days logged</div>
+        <div class="stat__value"><%= @timesheet.days_logged %></div>
+        <div class="stat__hint">days with entries</div>
+      </div>
+    <% end %>
+    <% if @client.monthly? %>
+      <div class="card stat">
+        <div class="stat__label">Retainer</div>
+        <div class="stat__value"><%= money(@client.monthly_rate, @client.effective_currency) %></div>
+        <div class="stat__hint">
+          <% if @client.effective_hourly_rate %>
+            <%= money(@client.effective_hourly_rate, @client.effective_currency) %>/hr effective
+          <% else %>
+            per month
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @timesheet.target? %>
+    <div class="card">
+      <div class="card__body">
+        <div class="row row--between" style="margin-bottom:0.6rem">
+          <span>
+            <strong><%= hours_label(@timesheet.total_hours) %></strong>
+            of <%= hours_label(@timesheet.expected_hours) %> hours
+            · <%= retainer_remaining_text(@timesheet) %>
+          </span>
+          <span class="muted small"><%= @timesheet.days_logged %> days logged</span>
+        </div>
+        <%= retainer_progress_bar(@timesheet) %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="card">
+    <div class="card__header">
+      <h2>Daily hours</h2>
+      <span class="muted small"><%= hours_label(@timesheet.total_hours) %> hrs over <%= @timesheet.days_logged %> days</span>
+    </div>
+    <% if @timesheet.days.any? %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Work</th>
+              <th class="num">Hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @timesheet.days.each do |day| %>
+              <tr>
+                <td class="nowrap"><%= date_label(day.date) %></td>
+                <td class="muted"><%= day.date.strftime("%a") %></td>
+                <td><%= day.description %></td>
+                <td class="num-strong"><%= hours_label(day.hours) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2"><%= @timesheet.target? ? "Total" : "Total hours" %></td>
+              <td class="muted">
+                <% if @timesheet.target? %>
+                  <%= hours_label(@timesheet.total_hours) %> of <%= hours_label(@timesheet.expected_hours) %> expected
+                <% else %>
+                  <%= @timesheet.days_logged %> days logged
+                <% end %>
+              </td>
+              <td class="num tabular"><%= hours_label(@timesheet.total_hours) %></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    <% else %>
+      <div class="empty">
+        <h3>No billable hours in this month</h3>
+        <p>Log time against <%= @client.display_name %>, or pick another month above.</p>
+        <%= link_to "Log time", time_entries_path(client_id: @client.id), class: "btn btn--primary" %>
+      </div>
+    <% end %>
+    <% if @timesheet.non_billable_hours.positive? %>
+      <div class="card__footer muted small">
+        <% hours = @timesheet.non_billable_hours %>
+        <%= hours_label(hours) %> non-billable <%= "hour".pluralize(hours.to_i) %> logged for this client in the
+        same period <%= hours == 1 ? "is" : "are" %> excluded from the total above.
+      </div>
+    <% end %>
+  </div>
+</div>

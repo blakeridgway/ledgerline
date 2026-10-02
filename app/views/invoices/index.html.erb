@@ -1,0 +1,103 @@
+<% content_for :title, "Invoices · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Invoices</h1>
+    <div class="page-head__meta"><%= @total_count %> invoice<%= "s" unless @total_count == 1 %></div>
+  </div>
+  <div class="page-actions">
+    <% if @retainer_clients.positive? %>
+      <%= button_to "Draft retainer invoices", draft_retainers_invoices_path, class: "btn",
+            form: { data: { turbo_confirm: "Draft this month's retainer invoices? Clients already invoiced for this month are skipped." } } %>
+    <% end %>
+    <%= link_to "New invoice", new_invoice_path, class: "btn btn--primary" %>
+  </div>
+</div>
+
+<div class="stack">
+  <div class="grid grid--stats">
+    <div class="card stat">
+      <div class="stat__label">Outstanding</div>
+      <div class="stat__value"><%= money(@outstanding_total, current_user.default_currency) %></div>
+      <div class="stat__hint">Draft and sent</div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Overdue</div>
+      <div class="stat__value"><%= money(@overdue_total, current_user.default_currency) %></div>
+      <div class="stat__hint">
+        <% if @overdue_count.positive? %>
+          <span class="badge badge--danger"><%= @overdue_count %></span>
+          invoice<%= "s" unless @overdue_count == 1 %> past due
+        <% else %>
+          Nothing past due
+        <% end %>
+      </div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Paid all time</div>
+      <div class="stat__value"><%= money(@paid_total, current_user.default_currency) %></div>
+      <div class="stat__hint">Marked as paid</div>
+    </div>
+    <div class="card stat">
+      <div class="stat__label">Invoiced this year</div>
+      <div class="stat__value"><%= money(@year_total, current_user.default_currency) %></div>
+      <div class="stat__hint"><%= Date.current.year %>, excluding voided</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <%= link_to "All", invoices_path, class: class_names("is-active": @status.blank?) %>
+    <%= link_to invoices_path(status: "overdue"), class: class_names("is-active": @status == "overdue") do %>
+      Overdue
+      <% if @overdue_count.positive? %><span class="badge badge--danger"><%= @overdue_count %></span><% end %>
+    <% end %>
+    <% Invoice::STATUSES.each do |status| %>
+      <%= link_to status.titleize, invoices_path(status: status), class: class_names("is-active": @status == status) %>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <% if @invoices.any? %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Number</th>
+              <th>Client</th>
+              <th>Period</th>
+              <th>Issued</th>
+              <th>Due</th>
+              <th>Status</th>
+              <th class="num">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @invoices.each do |invoice| %>
+              <tr>
+                <td class="mono"><%= link_to invoice.number, invoice_path(invoice) %></td>
+                <td><%= link_to invoice.client.display_name, client_path(invoice.client) %></td>
+                <td class="muted nowrap"><%= invoice.period_label %></td>
+                <td class="muted nowrap"><%= date_label(invoice.issued_on) %></td>
+                <td class="nowrap"><%= invoice_due_label(invoice) %></td>
+                <td><%= invoice_status_badge(invoice.status) %></td>
+                <td class="num-strong"><%= money(invoice.total, invoice.client.effective_currency) %></td>
+                <td class="nowrap">
+                  <%= link_to "View", invoice_path(invoice), class: "btn btn--sm btn--ghost" %>
+                  <%= link_to "PDF", invoice_path(invoice, format: :pdf), class: "btn btn--sm btn--ghost" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <%= render "shared/pagination" %>
+    <% else %>
+      <div class="empty">
+        <h3>No invoices<%= " with that status" if @status %> </h3>
+        <p>Create an invoice to bill your unbilled hours or a monthly retainer.</p>
+        <%= link_to "New invoice", new_invoice_path, class: "btn btn--primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

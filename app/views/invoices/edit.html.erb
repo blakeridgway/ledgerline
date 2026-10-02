@@ -1,0 +1,58 @@
+<% content_for :title, "Edit invoice #{@invoice.number} · time_logix" %>
+
+<div class="page-head">
+  <div>
+    <h1>Edit invoice <%= @invoice.number %></h1>
+    <div class="page-head__meta">
+      Line items are fixed once created. To change the billed work, delete this invoice
+      and create a new one — the time entries will be released.
+    </div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "View invoice", invoice_path(@invoice), class: "btn" %>
+  </div>
+</div>
+
+<div class="card" style="max-width:720px">
+  <div class="card__body">
+    <%= form_with model: @invoice, class: "form" do |form| %>
+      <%= render "shared/errors", object: @invoice %>
+
+      <div class="form__row">
+        <div class="field">
+          <%= form.label :status, "Status" %>
+          <%= form.select :status, Invoice::STATUSES.map { |s| [ s.titleize, s ] } %>
+        </div>
+        <div class="field">
+          <%= form.label :issued_on, "Issue date" %>
+          <%= form.date_field :issued_on %>
+        </div>
+        <div class="field">
+          <%= form.label :due_on, "Due date" %>
+          <%= form.date_field :due_on %>
+        </div>
+      </div>
+
+      <div class="form__row">
+        <div class="field">
+          <%= form.label :period_start, "Period start" %>
+          <%= form.date_field :period_start %>
+        </div>
+        <div class="field">
+          <%= form.label :period_end, "Period end" %>
+          <%= form.date_field :period_end %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= form.label :notes, "Notes" %>
+        <%= form.text_area :notes, rows: 3 %>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Save changes", class: "btn btn--primary" %>
+        <%= link_to "Cancel", invoice_path(@invoice), class: "btn btn--ghost" %>
+      </div>
+    <% end %>
+  </div>
+</div>

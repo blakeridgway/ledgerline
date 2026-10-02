@@ -1,0 +1,46 @@
+<% submit_label = local_assigns.fetch(:submit_label, "Save expense") %>
+
+<%= form_with model: expense, class: "form" do |form| %>
+  <%= render "shared/errors", object: expense %>
+
+  <div class="form__row">
+    <div class="field">
+      <%= form.label :spent_on, "Date" %>
+      <%= form.date_field :spent_on, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :amount, "Amount" %>
+      <%= form.number_field :amount, step: "0.01", min: 0, required: true, placeholder: "49.00" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :category, "Category" %>
+      <%= form.select :category, Expense::CATEGORIES, { include_blank: "Choose a category…" }, required: true %>
+    </div>
+  </div>
+
+  <div class="field">
+    <%= form.label :vendor, "Paid to" %>
+    <%= form.text_field :vendor, required: true, placeholder: "Figma, Delta, accountant…" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :client_id, "Client (optional)" %>
+    <%= form.collection_select :client_id, clients, :id, :display_name,
+          { include_blank: "Not client specific" } %>
+    <span class="hint">
+      Tagging a client only affects reporting — expenses are never added to an invoice.
+    </span>
+  </div>
+
+  <div class="field">
+    <%= form.label :notes, "Notes" %>
+    <%= form.text_area :notes, rows: 2, placeholder: "What it was for, receipt reference…" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit submit_label, class: "btn btn--primary" %>
+    <%= link_to "Cancel", expenses_path, class: "btn btn--ghost" %>
+  </div>
+<% end %>

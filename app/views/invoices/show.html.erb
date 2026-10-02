@@ -1,0 +1,186 @@
+<% content_for :title, "Invoice #{@invoice.number} · time_logix" %>
+
+<div class="page-head no-print">
+  <div>
+    <h1>Invoice <%= @invoice.number %></h1>
+    <div class="page-head__meta row">
+      <%= invoice_status_badge(@invoice.status) %>
+      <% if @invoice.overdue? || @invoice.due_soon? %>
+        <%= invoice_due_label(@invoice) %>
+      <% end %>
+      <span><%= @invoice.client.display_name %></span>
+      <span class="muted">·</span>
+      <span class="muted"><%= @invoice.period_label %></span>
+      <% if @invoice.sent_at.present? %>
+        <span class="muted">· sent <%= date_label(@invoice.sent_at.to_date) %></span>
+      <% end %>
+      <% if @invoice.reminded? %>
+        <span class="muted">· reminded <%= date_label(@invoice.last_reminded_at.to_date) %></span>
+      <% end %>
+    </div>
+  </div>
+  <div class="page-actions">
+    <%= link_to "Download PDF", invoice_path(@invoice, format: :pdf), class: "btn btn--primary" %>
+    <% if @invoice.outstanding? %>
+      <%= button_to @invoice.sent? ? "Resend invoice" : "Send to client",
+            deliver_invoice_path(@invoice), class: "btn" %>
+      <% if @invoice.sent? %>
+        <%= button_to "Send reminder", remind_invoice_path(@invoice), class: "btn" %>
+      <% end %>
+    <% end %>
+    <%= button_to @invoice.client.monthly? ? "Repeat for next month" : "Repeat next period",
+          repeat_invoice_path(@invoice), class: "btn" %>
+    <% if @invoice.client.monthly? %>
+      <%= link_to "Timesheet",
+            timesheet_client_path(@invoice.client, month: @invoice.period_end.strftime("%Y-%m")),
+            class: "btn" %>
+    <% end %>
+    <% if @invoice.draft? %>
+      <%= button_to "Mark as sent", mark_sent_invoice_path(@invoice), class: "btn" %>
+    <% end %>
+    <% if @invoice.outstanding? %>
+      <%= button_to "Mark as paid", mark_paid_invoice_path(@invoice), class: "btn" %>
+      <%= link_to "Edit", edit_invoice_path(@invoice), class: "btn" %>
+      <%= button_to "Void", void_invoice_path(@invoice), class: "btn",
+            form: { data: { turbo_confirm: "Void this invoice? Its time entries become unbilled again." } } %>
+    <% end %>
+    <% if @invoice.draft? %>
+      <%= button_to "Delete", invoice_path(@invoice), method: :delete, class: "btn btn--danger",
+            form: { data: { turbo_confirm: "Delete this invoice? Its time entries become unbilled again." } } %>
+    <% end %>
+  </div>
+</div>
+
+<div class="card invoice-doc">
+  <div class="card__body">
+    <div class="row row--between" style="align-items:flex-start">
+      <div>
+        <div style="font-size:1.15rem; font-weight:700"><%= current_user.billing_name %></div>
+        <div class="muted small">
+          <% if current_user.address.present? %><%= simple_format(current_user.address, {}, wrapper_tag: "span") %><br><% end %>
+          <%= current_user.phone %><br>
+          <%= current_user.email_address %>
+          <% if current_user.tax_id.present? %><br>Tax ID: <%= current_user.tax_id %><% end %>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:1.6rem; font-weight:700; color:var(--brand)">INVOICE</div>
+      </div>
+    </div>
+
+    <hr style="border:none; border-top:1px solid var(--line); margin:1.1rem 0">
+
+    <div class="row row--between" style="align-items:flex-start">
+      <div>
+        <div class="stat__label">Bill to</div>
+        <div style="font-weight:650"><%= @invoice.client.display_name %></div>
+        <div class="muted small">
+          <% if @invoice.client.name.present? && @invoice.client.name != @invoice.client.display_name %>
+            <%= @invoice.client.name %><br>
+          <% end %>
+          <% if @invoice.client.address.present? %><%= simple_format(@invoice.client.address, {}, wrapper_tag: "span") %><br><% end %>
+          <%= @invoice.client.email %><br>
+          <%= @invoice.client.phone %>
+        </div>
+      </div>
+      <div>
+        <table style="font-size:0.875rem">
+          <tr><td class="muted" style="padding:2px 0">Invoice no.</td><td style="padding:2px 0 2px 2rem; text-align:right"><%= @invoice.number %></td></tr>
+          <tr><td class="muted" style="padding:2px 0">Issued</td><td style="padding:2px 0 2px 2rem; text-align:right"><%= date_label(@invoice.issued_on) %></td></tr>
+          <tr><td class="muted" style="padding:2px 0">Due</td><td style="padding:2px 0 2px 2rem; text-align:right"><%= date_label(@invoice.due_on) %></td></tr>
+          <tr><td class="muted" style="padding:2px 0">Period</td><td style="padding:2px 0 2px 2rem; text-align:right"><%= @invoice.period_label %></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:1.25rem">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th class="num">Qty / Hrs</th>
+            <th class="num">Rate</th>
+            <th class="num">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoice.invoice_line_items.each do |item| %>
+            <tr>
+              <td class="nowrap"><%= date_label(item.service_date) %></td>
+              <td><%= item.description %></td>
+              <td class="num tabular"><%= item.hourly? ? hours_label(item.quantity) : "1" %></td>
+              <td class="num tabular"><%= money(item.unit_rate, @invoice.client.effective_currency) %></td>
+              <td class="num tabular"><%= money(item.amount, @invoice.client.effective_currency) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="invoice-doc__totals" style="margin-top:1rem">
+      <table class="table">
+        <tr>
+          <td class="muted">Subtotal</td>
+          <td class="num tabular"><%= money(@invoice.subtotal, @invoice.client.effective_currency) %></td>
+        </tr>
+        <tr>
+          <td class="muted">Total</td>
+          <td class="num tabular"><%= money(@invoice.total, @invoice.client.effective_currency) %></td>
+        </tr>
+        <% if @invoice.paid? %>
+          <tr>
+            <td class="muted">Paid <%= date_label(@invoice.paid_at&.to_date) %></td>
+            <td class="num tabular">(<%= money(@invoice.total, @invoice.client.effective_currency) %>)</td>
+          </tr>
+          <tr>
+            <td>Balance due</td>
+            <td class="num tabular"><%= money(0, @invoice.client.effective_currency) %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+
+    <% if @invoice.notes.present? || current_user.payment_instructions.present? %>
+      <div style="margin-top:1.5rem">
+        <% if @invoice.notes.present? %>
+          <div class="stat__label">Notes</div>
+          <p class="small"><%= @invoice.notes %></p>
+        <% end %>
+        <% if current_user.payment_instructions.present? %>
+          <div class="stat__label">Payment instructions</div>
+          <p class="small"><%= simple_format(current_user.payment_instructions) %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<% if @invoice.time_entries.any? %>
+  <div class="card no-print" style="margin-top:1.25rem">
+    <div class="card__header">
+      <h2>Time entries on this invoice</h2>
+      <span class="muted small"><%= hours_label(@invoice.time_entries.sum(:hours)) %> hours total</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Work</th>
+            <th class="num">Hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoice.time_entries.chronological.each do |entry| %>
+            <tr>
+              <td class="nowrap"><%= date_label(entry.worked_on) %></td>
+              <td><%= entry.summary %></td>
+              <td class="num tabular"><%= hours_label(entry.hours) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>

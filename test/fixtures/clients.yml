@@ -1,0 +1,43 @@
+acme:
+  user: blake
+  name: Acme Corp
+  email: ap@acme.example
+  phone: 512-555-0100
+  address: "500 Congress Ave\nAustin, TX 78701"
+  billing_type: hourly
+  hourly_rate: 150
+  monthly_rate: 0
+  currency: USD
+  active: true
+
+vertex:
+  user: blake
+  name: Vertex Robotics
+  company: Finance
+  email: finance@vertex.example
+  billing_type: monthly
+  hourly_rate: 0
+  monthly_rate: 6000
+  expected_hours_per_month: 160
+  currency: USD
+  active: true
+
+# A retainer with no hours commitment, to cover the "nothing to measure" path.
+halcyon:
+  user: blake
+  name: Halcyon Labs
+  billing_type: monthly
+  hourly_rate: 0
+  monthly_rate: 3000
+  expected_hours_per_month: 0
+  currency: USD
+  active: true
+
+rival:
+  user: other
+  name: Rival Inc
+  billing_type: hourly
+  hourly_rate: 90
+  monthly_rate: 0
+  currency: USD
+  active: true
