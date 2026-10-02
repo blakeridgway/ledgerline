@@ -17,6 +17,12 @@
     </div>
   </div>
 
+  <% if preview.conflict? %>
+    <div class="flash flash--alert" style="margin-top:0.75rem">
+      An invoice already exists for an overlapping period — creating this one will fail. Void or delete it first.
+    </div>
+  <% end %>
+
   <div class="table-wrap" style="margin-top:0.75rem">
     <table class="table">
       <thead>

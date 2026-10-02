@@ -14,15 +14,20 @@ class InvoiceMailer < ApplicationMailer
 
     mail(
       to: @client.email,
-      from: "#{@user.billing_name} <#{@user.email_address}>",
+      from: "#{display_from_name} <#{@user.email_address}>",
       reply_to: @user.email_address,
       subject: subject_line
     )
   end
 
   private
+    # A business name with a newline could otherwise inject a mail header.
+    def display_from_name
+      @display_from_name ||= @user.billing_name.to_s.gsub(/[\r\n]+/, " ").strip
+    end
+
     def subject_line
-      return "Invoice #{@invoice.number} from #{@user.billing_name}" unless @reminder
+      return "Invoice #{@invoice.number} from #{display_from_name}" unless @reminder
 
       if @invoice.overdue?
         days = @invoice.days_overdue

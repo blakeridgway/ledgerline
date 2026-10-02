@@ -11,9 +11,17 @@ class Invoice < ApplicationRecord
   validates :number, presence: true, uniqueness: { scope: :user_id }
   validates :period_start, :period_end, :issued_on, presence: true
   validate :period_end_after_period_start
+  validate :period_does_not_overlap
 
   scope :recent_first, -> { order(period_end: :desc, created_at: :desc) }
   scope :open_invoices, -> { where(status: %w[draft sent]) }
+  # Non-void invoices whose period intersects the given one. Matching on an
+  # intersection (not an exact pair) stops a retainer being billed twice by
+  # shifting the period a day.
+  scope :overlapping, ->(period_start, period_end) {
+    where.not(status: "void")
+      .where("period_start <= ? AND period_end >= ?", period_end, period_start)
+  }
 
   # Sent, unpaid, and past the due date.
   scope :overdue, -> { sent.where(due_on: ...Date.current) }
@@ -59,11 +67,10 @@ class Invoice < ApplicationRecord
     update!(status: "paid", paid_at: date.in_time_zone)
   end
 
-  # Records that the invoice went to the client, without moving a draft to sent
-  # a second time if it was already marked sent by hand.
+  # Records that the invoice went to the client. Status and timestamp are set in
+  # one write so a failure can't leave a sent invoice with no sent_at.
   def mark_sent!(time = Time.current)
-    update!(status: "sent") unless sent?
-    update!(sent_at: time)
+    update!(status: "sent", sent_at: time)
   end
 
   # True when the invoice is with the client and past its due date.
@@ -105,5 +112,13 @@ class Invoice < ApplicationRecord
     def period_end_after_period_start
       return if period_start.blank? || period_end.blank?
       errors.add(:period_end, "must be on or after the period start") if period_end < period_start
+    end
+
+    def period_does_not_overlap
+      return if client.nil? || period_start.blank? || period_end.blank? || void?
+
+      scope = client.invoices.overlapping(period_start, period_end)
+      scope = scope.where.not(id: id) if persisted?
+      errors.add(:base, "An invoice already exists for an overlapping period") if scope.exists?
     end
 end

@@ -10,6 +10,8 @@ class Client < ApplicationRecord
   enum :billing_type, { hourly: "hourly", monthly: "monthly" }, validate: true
 
   validates :name, presence: true, uniqueness: { scope: :user_id }
+  validates :email, allow_blank: true,
+    format: { with: URI::MailTo::EMAIL_REGEXP, message: "is not a valid email address" }
   validates :hourly_rate, :monthly_rate,
     numericality: { greater_than_or_equal_to: 0 }
   validates :expected_hours_per_month, numericality: { greater_than_or_equal_to: 0 }

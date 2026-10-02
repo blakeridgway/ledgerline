@@ -143,8 +143,8 @@ timesheet, so nothing disappears silently.
 | Delete invoice      | Entries are released and become unbilled again             |
 | Mark paid           | No change — the invoice is simply locked from edits        |
 
-A period that already has a non-void invoice for the same client cannot be
-invoiced twice, which prevents accidental double billing.
+A period that overlaps a non-void invoice for the same client cannot be
+invoiced again, which prevents accidental double billing.
 
 Retainer hours are informational: they are attached to the invoice so they can't
 be counted twice, but the invoice amount is always the flat retainer. The
@@ -154,7 +154,8 @@ whichever invoice covered them.
 ### Invoice numbering
 
 `INV-YYYYMM-001`, using the prefix from your business settings. The sequence
-restarts each month and can be edited per invoice.
+restarts each month and is assigned automatically; once an invoice exists its
+number is not editable.
 
 ## How it's put together
 
@@ -205,7 +206,7 @@ app/views         ERB templates; hand-written CSS, no build step
 ## Tests
 
 ```bash
-bin/rails test     # 234 tests: models, timesheets, tax summary, the invoice builder, mailers, PDFs, controllers
+bin/rails test     # 259 tests: models, timesheets, tax summary, the invoice builder, mailers, PDFs, controllers
 bin/rubocop        # styling (rubocop-rails-omakase)
 ```
 

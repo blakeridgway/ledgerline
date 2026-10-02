@@ -63,6 +63,52 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes invoice.errors[:issued_on], "can't be blank"
   end
 
+  test "rejects a period that overlaps an existing non-void invoice" do
+    existing = invoices(:acme_old_draft)
+    overlapping = existing.client.invoices.new(
+      user: @user, number: "INV-OVERLAP-1",
+      period_start: Date.new(2020, 2, 15), period_end: Date.new(2020, 3, 10),
+      issued_on: Date.current
+    )
+
+    assert_not overlapping.valid?
+    assert_includes overlapping.errors[:base], "An invoice already exists for an overlapping period"
+  end
+
+  test "allows a period adjacent to an existing invoice" do
+    existing = invoices(:acme_old_draft)
+    adjacent = existing.client.invoices.new(
+      user: @user, number: "INV-ADJACENT-1",
+      period_start: Date.new(2020, 3, 1), period_end: Date.new(2020, 3, 31),
+      issued_on: Date.current
+    )
+
+    assert adjacent.valid?, adjacent.errors.full_messages.to_sentence
+  end
+
+  test "allows re-invoicing a period once the existing invoice is void" do
+    existing = invoices(:acme_old_draft)
+    existing.void!
+    reuse = existing.client.invoices.new(
+      user: @user, number: "INV-REUSE-1",
+      period_start: existing.period_start, period_end: existing.period_end,
+      issued_on: Date.current
+    )
+
+    assert reuse.valid?, reuse.errors.full_messages.to_sentence
+  end
+
+  test "the database rejects an exact duplicate period when validations are bypassed" do
+    existing = invoices(:acme_old_draft)
+    duplicate = existing.client.invoices.new(
+      user: existing.user, number: "INV-DUP-1",
+      period_start: existing.period_start, period_end: existing.period_end,
+      issued_on: Date.current
+    )
+
+    assert_raises(ActiveRecord::RecordNotUnique) { duplicate.save!(validate: false) }
+  end
+
   test "mark_paid! records the payment" do
     invoice = invoices(:acme_old_draft)
     invoice.mark_paid!(Date.new(2026, 3, 15))

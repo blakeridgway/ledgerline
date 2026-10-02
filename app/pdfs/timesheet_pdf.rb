@@ -194,7 +194,7 @@ class TimesheetPdf
       notes << "Hours shown are billable entries logged for this client during the period."
       if timesheet.non_billable_hours.positive?
         hours = timesheet.non_billable_hours
-        notes << "#{hours_label(hours)} non-billable #{'hour'.pluralize(hours.to_i)} logged in the " \
+        notes << "#{hours_label(hours)} non-billable #{hours == 1 ? 'hour' : 'hours'} logged in the " \
                  "same period #{hours == 1 ? 'is' : 'are'} excluded."
       end
 

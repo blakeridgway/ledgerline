@@ -43,9 +43,14 @@
   <div class="form__row">
     <div class="field">
       <%= form.label :client_id, "Client" %>
-      <%= form.collection_select :client_id, clients, :id, :display_name,
-            { prompt: "Select a client…" },
-            { required: true } %>
+      <% if time_entry.persisted? %>
+        <div class="muted"><%= time_entry.display_name %></div>
+        <span class="hint">A logged entry stays with its client; delete and re-log to move it.</span>
+      <% else %>
+        <%= form.collection_select :client_id, clients, :id, :display_name,
+              { prompt: "Select a client…" },
+              { required: true } %>
+      <% end %>
     </div>
 
     <div class="field">

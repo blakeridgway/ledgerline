@@ -50,4 +50,13 @@ class InvoiceMailerTest < ActionMailer::TestCase
       InvoiceMailer.invoice(@invoice).deliver_now
     end
   end
+
+  test "strips newlines from the from display name" do
+    @invoice.user.update!(business_name: "Evil\r\nInjected")
+
+    mail = InvoiceMailer.invoice(@invoice)
+
+    assert_match(/Evil Injected <blake@example\.com>/, mail.header.to_s)
+    assert_no_match(/\r\nInjected/, mail.header.to_s)
+  end
 end

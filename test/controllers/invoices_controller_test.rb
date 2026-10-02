@@ -426,4 +426,24 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".stat__label", /Overdue/
     assert_match "INV-202107-001", response.body
   end
+
+  test "a paid invoice cannot be deleted" do
+    invoice = invoices(:acme_old_paid)
+
+    assert_no_difference -> { Invoice.count } do
+      delete invoice_path(invoice)
+    end
+
+    assert_redirected_to invoice_path(invoice)
+    assert_match(/can no longer be changed/, flash[:alert].to_s)
+  end
+
+  test "the new invoice preview warns when the period is already invoiced" do
+    retainer_invoice
+
+    get new_invoice_path(client_id: clients(:vertex).id)
+
+    assert_response :success
+    assert_match(/already exists for an overlapping period/, response.body)
+  end
 end

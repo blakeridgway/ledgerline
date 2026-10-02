@@ -98,4 +98,10 @@ class ExpensesControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :not_found
   end
+
+  test "index clamps an absurd year instead of crashing" do
+    get expenses_path(year: "999999999999")
+
+    assert_response :success
+  end
 end

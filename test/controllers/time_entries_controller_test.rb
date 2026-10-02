@@ -247,4 +247,12 @@ class TimeEntriesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "the edit form does not offer a client change" do
+    get edit_time_entry_path(time_entries(:acme_unbilled_a))
+
+    assert_response :success
+    assert_select "select[name='time_entry[client_id]']", count: 0
+    assert_match "Acme Corp", response.body
+  end
 end

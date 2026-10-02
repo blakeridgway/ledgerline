@@ -69,6 +69,15 @@ class TaxSummaryTest < ActiveSupport::TestCase
     assert_equal 1650.to_d, TaxSummary.new(@user, 2020).income
   end
 
+  test "received excludes an invoice that was paid and then voided" do
+    invoice = retainer_invoice(paid: true)
+    invoice.void!
+
+    summary = TaxSummary.new(@user, @year)
+
+    assert_equal 0.to_d, summary.received
+  end
+
   test "counts only the requested year" do
     summary = TaxSummary.new(@user, 2020)
 

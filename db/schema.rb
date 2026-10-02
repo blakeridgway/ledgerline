@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_151353) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_02_000000) do
   create_table "clients", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "name", null: false
@@ -78,6 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_151353) do
     t.datetime "updated_at", null: false
     t.datetime "sent_at"
     t.datetime "last_reminded_at"
+    t.index ["client_id", "period_start", "period_end"], name: "index_invoices_on_client_and_period_not_void", unique: true, where: "status != 'void'"
     t.index ["client_id", "period_start"], name: "index_invoices_on_client_id_and_period_start"
     t.index ["client_id"], name: "index_invoices_on_client_id"
     t.index ["user_id", "number"], name: "index_invoices_on_user_id_and_number", unique: true

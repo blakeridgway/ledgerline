@@ -56,7 +56,8 @@ class InvoiceBuilderTest < ActiveSupport::TestCase
 
   test "does not re-bill entries already on an invoice" do
     build
-    second = build(period_start: @period_start - 1.month, period_end: @period_end)
+    last_month_start = @period_start - 1.month
+    second = build(period_start: last_month_start, period_end: last_month_start.end_of_month)
 
     assert_equal 1, second.invoice_line_items.count
     assert_equal 4.to_d, second.hours_total
@@ -118,6 +119,15 @@ class InvoiceBuilderTest < ActiveSupport::TestCase
     assert_match(/already exists/, error.message)
   end
 
+  test "raises when a shifted period overlaps an existing invoice" do
+    build
+
+    error = assert_raises(InvoiceBuilder::Error) do
+      build(period_start: @period_start + 15.days, period_end: @period_end + 15.days)
+    end
+    assert_match(/overlapping/, error.message)
+  end
+
   test "voiding an invoice releases its entries so the period can be re-invoiced" do
     first = build
     first.void!
@@ -163,5 +173,18 @@ class InvoiceBuilderTest < ActiveSupport::TestCase
 
     assert_not preview.entries?
     assert_not preview.billable?
+  end
+
+  test "preview flags a period already covered by an invoice" do
+    build
+    preview = InvoiceBuilder.preview(client: @acme, period_start: @period_start, period_end: @period_end)
+
+    assert preview.conflict?
+  end
+
+  test "preview is not flagged as a conflict for a clean period" do
+    preview = InvoiceBuilder.preview(client: @acme, period_start: @period_start, period_end: @period_end)
+
+    assert_not preview.conflict?
   end
 end

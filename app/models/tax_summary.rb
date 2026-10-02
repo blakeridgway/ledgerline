@@ -36,7 +36,7 @@ class TaxSummary
   end
 
   def received
-    @received ||= user.invoices.where(paid_at: year_range).sum(:total)
+    @received ||= user.invoices.where(paid_at: year_range).where.not(status: "void").sum(:total)
   end
 
   def expenses

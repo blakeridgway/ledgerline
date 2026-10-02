@@ -2,7 +2,7 @@ class InvoicesController < ApplicationController
   before_action :set_invoice, only: %i[
     show edit update destroy mark_paid mark_sent void repeat deliver remind
   ]
-  before_action :require_editable, only: %i[edit update mark_paid mark_sent void deliver remind]
+  before_action :require_editable, only: %i[edit update destroy mark_paid mark_sent void deliver remind]
 
   def index
     @status = params[:status].presence_in(Invoice::STATUSES + [ "overdue" ])

@@ -59,8 +59,11 @@ class ExpensesController < ApplicationController
     end
 
     def filter_params
+      year = params[:year].presence&.to_i
+      year = Date.current.year unless year&.between?(1970, 2100)
+
       {
-        year: params[:year].presence&.to_i || Date.current.year,
+        year: year,
         category: params[:category].presence_in(Expense::CATEGORIES),
         client_id: params[:client_id].presence
       }

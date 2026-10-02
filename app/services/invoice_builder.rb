@@ -6,7 +6,7 @@
 class InvoiceBuilder
   class Error < StandardError; end
 
-  Preview = Struct.new(:client, :period_start, :period_end, :entries, :hours, :amount, keyword_init: true) do
+  Preview = Struct.new(:client, :period_start, :period_end, :entries, :hours, :amount, :conflict, keyword_init: true) do
     def entries?
       entries.any?
     end
@@ -17,6 +17,10 @@ class InvoiceBuilder
 
     def billable?
       hourly? ? entries? : client.monthly_rate.to_d.positive?
+    end
+
+    def conflict?
+      conflict
     end
   end
 
@@ -32,13 +36,17 @@ class InvoiceBuilder
         (hours * client.hourly_rate.to_d).round(2)
       end
 
+    conflict = period_start.present? && period_end.present? &&
+      client.invoices.overlapping(period_start, period_end).exists?
+
     Preview.new(
       client: client,
       period_start: period_start,
       period_end: period_end,
       entries: entries,
       hours: hours,
-      amount: amount
+      amount: amount,
+      conflict: conflict
     )
   end
 
@@ -51,29 +59,41 @@ class InvoiceBuilder
   end
 
   def call
-    validate!
+    attempts = 0
 
-    Invoice.transaction do
-      invoice = client.invoices.create!(
-        user: client.user,
-        number: Invoice.next_number_for(client.user, issued_on),
-        period_start: period_start,
-        period_end: period_end,
-        status: "draft",
-        issued_on: issued_on,
-        due_on: client.user.default_due_date(issued_on),
-        notes: notes
-      )
+    begin
+      validate!
 
-      build_line_items(invoice)
-      attach_covered_entries(invoice)
+      Invoice.transaction do
+        invoice = client.invoices.create!(
+          user: client.user,
+          number: Invoice.next_number_for(client.user, issued_on),
+          period_start: period_start,
+          period_end: period_end,
+          status: "draft",
+          issued_on: issued_on,
+          due_on: client.user.default_due_date(issued_on),
+          notes: notes
+        )
 
-      invoice.update!(
-        subtotal: invoice.invoice_line_items.sum(:amount),
-        total: invoice.invoice_line_items.sum(:amount)
-      )
+        build_line_items(invoice)
+        attach_covered_entries(invoice)
 
-      invoice
+        invoice.update!(
+          subtotal: invoice.invoice_line_items.sum(:amount),
+          total: invoice.invoice_line_items.sum(:amount)
+        )
+
+        invoice
+      end
+    rescue ActiveRecord::RecordNotUnique
+      # Two requests raced to create the same invoice. Retrying regenerates the
+      # number, and validate! now sees the winner's row and reports cleanly.
+      attempts += 1
+      retry if attempts < 3
+      raise Error, "That invoice was just created, please try again."
+    rescue ActiveRecord::RecordInvalid => e
+      raise Error, e.record.errors.full_messages.to_sentence
     end
   end
 
@@ -85,8 +105,9 @@ class InvoiceBuilder
       raise Error, "Enter a valid period end." if period_end.blank?
       raise Error, "Period end must be on or after period start." if period_end < period_start
 
-      duplicate = client.invoices.where(period_start: period_start, period_end: period_end).where.not(status: "void")
-      raise Error, "An invoice already exists for that period." if duplicate.exists?
+      if client.invoices.overlapping(period_start, period_end).exists?
+        raise Error, "An invoice already exists for an overlapping period."
+      end
 
       if client.hourly? && entries.empty?
         raise Error, "No unbilled billable hours for that period."

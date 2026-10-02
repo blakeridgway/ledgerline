@@ -32,4 +32,19 @@ class UserTest < ActiveSupport::TestCase
       user.destroy
     end
   end
+
+  test "rejects a malformed email address" do
+    user = User.new(email_address: "not-an-email")
+
+    assert_not user.valid?
+    assert_includes user.errors[:email_address], "is not a valid email address"
+  end
+
+  test "rejects an invoice prefix with unsafe characters" do
+    user = users(:blake)
+    user.invoice_prefix = "INV/../x"
+
+    assert_not user.valid?
+    assert_includes user.errors[:invoice_prefix], "may only contain letters, numbers, dots, dashes and underscores"
+  end
 end

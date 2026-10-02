@@ -111,4 +111,11 @@ class ClientTest < ActiveSupport::TestCase
 
     assert_equal [ "Discovery workshop", "Data model review" ], entries.map(&:summary)
   end
+
+  test "rejects a malformed billing email" do
+    client = @user.clients.new(name: "Bad Email Co", billing_type: "hourly", hourly_rate: 10, email: "nope")
+
+    assert_not client.valid?
+    assert_includes client.errors[:email], "is not a valid email address"
+  end
 end
