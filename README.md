@@ -169,6 +169,7 @@ app/pdfs          InvoicePdf      — Prawn rendering of the invoice
 app/pdfs          TimesheetPdf    — Prawn rendering of the monthly timesheet
 app/controllers   dashboard, clients, time_entries, invoices, expenses, reports, profiles (+ auth)
 app/views         ERB templates; hand-written CSS, no build step
+app/javascript    Stimulus controllers; lib/stopwatch holds the tested billing arithmetic
 ```
 
 - **Auth** is the Rails 8 authentication generator (`has_secure_password`, a
@@ -206,12 +207,15 @@ app/views         ERB templates; hand-written CSS, no build step
 ## Tests
 
 ```bash
-bin/rails test     # 259 tests: models, timesheets, tax summary, the invoice builder, mailers, PDFs, controllers
-bin/rubocop        # styling (rubocop-rails-omakase)
+bin/rails test       # 260 tests: models, timesheets, tax summary, the invoice builder, mailers, PDFs, controllers
+node --test test/javascript   # stopwatch arithmetic — breaks must never be billed
+bin/rubocop          # styling (rubocop-rails-omakase)
 ```
 
 Tests run against SQLite in parallel; fixtures in `test/fixtures` are written to
-be valid records rather than placeholders.
+be valid records rather than placeholders. The JavaScript suite needs no npm
+install — it uses Node's built-in test runner. `bin/ci` runs all of the above
+plus the security scans.
 
 ## Notes on this setup
 
