@@ -2,6 +2,7 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest")
-
+# Note: deliberately not forcing --ensure-latest here. That flag makes the
+# scan exit non-zero whenever a newer Brakeman exists, which fails CI through
+# no fault of the code. Keep the gem current via Dependabot instead.
 load Gem.bin_path("brakeman", "brakeman")
