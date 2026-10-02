@@ -255,4 +255,13 @@ class TimeEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='time_entry[client_id]']", count: 0
     assert_match "Acme Corp", response.body
   end
+
+  test "the log time card renders a timer with a break control" do
+    get time_entries_path
+
+    assert_response :success
+    assert_select "button[data-timer-target='toggle']"
+    assert_select "button[data-timer-target='break']", text: "Take break"
+    assert_select "[data-timer-target='breakDisplay']"
+  end
 end

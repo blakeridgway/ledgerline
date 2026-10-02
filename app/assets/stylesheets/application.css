@@ -354,6 +354,12 @@ input[type="checkbox"] { width: auto; }
   font-variant-numeric: tabular-nums;
 }
 .timer__hint { font-size: 0.8rem; color: var(--ink-soft); }
+.timer__break {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
 
 .def-list { display: grid; grid-template-columns: 130px 1fr; gap: 0.4rem 1rem; font-size: 0.9rem; }
 .def-list dt { color: var(--muted); }

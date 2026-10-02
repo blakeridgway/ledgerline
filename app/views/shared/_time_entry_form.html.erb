@@ -33,8 +33,11 @@
     <div class="timer">
       <button type="button" class="btn btn--sm btn--primary"
               data-timer-target="toggle" data-action="timer#toggle">Start timer</button>
+      <button type="button" class="btn btn--sm" disabled
+              data-timer-target="break" data-action="timer#toggleBreak">Take break</button>
       <span class="timer__clock" data-timer-target="display">00:00:00</span>
-      <span class="timer__hint">Stop the timer to fill in the hours field.</span>
+      <span class="timer__hint" data-timer-target="hint">Stop the timer to fill in the hours field.</span>
+      <span class="timer__break" data-timer-target="breakDisplay"></span>
       <span class="spacer"></span>
       <button type="button" class="btn btn--sm btn--ghost" data-action="timer#reset">Reset</button>
     </div>
