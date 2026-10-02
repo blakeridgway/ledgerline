@@ -61,4 +61,24 @@ class TimeEntryTest < ActiveSupport::TestCase
   test "delegates display_name to the client" do
     assert_equal "Acme Corp", @hourly_entry.display_name
   end
+
+  test "break minutes default to zero" do
+    entry = clients(:acme).time_entries.new(worked_on: Date.current, hours: 1)
+
+    assert entry.valid?
+    assert_equal 0, entry.break_minutes
+  end
+
+  test "rejects negative break minutes" do
+    entry = clients(:acme).time_entries.new(worked_on: Date.current, hours: 1, break_minutes: -5)
+
+    assert_not entry.valid?
+    assert_includes entry.errors[:break_minutes], "must be greater than or equal to 0"
+  end
+
+  test "reports break hours" do
+    entry = clients(:acme).time_entries.new(worked_on: Date.current, hours: 1, break_minutes: 90)
+
+    assert_equal 1.5.to_d, entry.break_hours
+  end
 end

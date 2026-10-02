@@ -33,6 +33,14 @@ module PdfHelpers
     ActiveSupport::NumberHelper.number_to_rounded(value, precision: 2, strip_insignificant_zeros: true)
   end
 
+  # "30 min", "1.5 h", or "-" when nothing was logged.
+  def break_label(minutes)
+    minutes = minutes.to_i
+    return "-" if minutes.zero?
+
+    minutes < 60 ? "#{minutes} min" : "#{hours_label(minutes / 60.0)} h"
+  end
+
   def money(value, currency_symbol)
     ActiveSupport::NumberHelper.number_to_currency(value, unit: currency_symbol)
   end

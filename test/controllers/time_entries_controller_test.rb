@@ -80,6 +80,17 @@ class TimeEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
+  test "create records break minutes" do
+    assert_difference -> { TimeEntry.count }, 1 do
+      post time_entries_path, params: { time_entry: {
+        client_id: clients(:acme).id, worked_on: Date.current,
+        hours: "7", break_minutes: "60", description: "Lunch break", billable: "1"
+      } }
+    end
+
+    assert_equal 60, TimeEntry.order(:id).last.break_minutes
+  end
+
   test "update edits an entry" do
     entry = time_entries(:acme_unbilled_a)
 
@@ -263,5 +274,16 @@ class TimeEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-timer-target='toggle']"
     assert_select "button[data-timer-target='break']", text: "Take break"
     assert_select "[data-timer-target='breakDisplay']"
+    assert_select "input[name='time_entry[break_minutes]'][data-timer-target='breakMinutes']"
+  end
+
+  test "the week grid fills with the user's default workday hours" do
+    users(:blake).update!(default_workday_hours: 7)
+
+    get batch_time_entries_path(client_id: clients(:acme).id)
+
+    assert_response :success
+    assert_select "[data-batch-default-hours-value='7.0']"
+    assert_match "Fill weekdays with 7", response.body
   end
 end

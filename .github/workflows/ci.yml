@@ -24,3 +24,30 @@ jobs:
       # tests and seeds all live in config/ci.rb.
       - name: Run CI
         run: bin/ci
+
+  # System tests drive a real browser, so they run in their own job with
+  # Chrome installed. bin/ci stays browser-free for local runs.
+  system-test:
+    runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Prepare test database
+        run: bin/rails db:test:prepare
+
+      - name: Run system tests
+        run: bin/rails test:system

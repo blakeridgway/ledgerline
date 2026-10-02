@@ -6,7 +6,10 @@ class TimeEntry < ApplicationRecord
 
   validates :worked_on, presence: true
   validates :hours, presence: true, numericality: { greater_than: 0 }
+  validates :break_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :description, length: { maximum: 500 }, allow_blank: true
+
+  before_validation { self.break_minutes = 0 if break_minutes.blank? }
 
   scope :billable, -> { where(billable: true) }
   scope :unbilled, -> { where(invoice_id: nil) }
@@ -22,6 +25,11 @@ class TimeEntry < ApplicationRecord
     return 0.to_d if client.monthly?
 
     (hours.to_d * hourly_rate.to_d).round(2)
+  end
+
+  # Break time is recorded for the timesheet only; `hours` is already net of it.
+  def break_hours
+    break_minutes.to_d / 60
   end
 
   def summary

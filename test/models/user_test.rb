@@ -47,4 +47,12 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.valid?
     assert_includes user.errors[:invoice_prefix], "may only contain letters, numbers, dots, dashes and underscores"
   end
+
+  test "rejects a workday longer than 24 hours" do
+    user = users(:blake)
+    user.default_workday_hours = 25
+
+    assert_not user.valid?
+    assert_includes user.errors[:default_workday_hours], "must be less than or equal to 24"
+  end
 end

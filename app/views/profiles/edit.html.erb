@@ -61,6 +61,11 @@
           <span class="hint">Default for new monthly clients. 160 = full time. Set 0 to leave it unset.</span>
         </div>
         <div class="field">
+          <%= form.label :default_workday_hours, "Default workday hours" %>
+          <%= form.number_field :default_workday_hours, min: 0, max: 24, step: "0.25" %>
+          <span class="hint">Used by "Fill weekdays" when logging a week. Set 7 if you take an hour for lunch.</span>
+        </div>
+        <div class="field">
           <%= form.label :tax_set_aside_percent, "Tax set-aside %" %>
           <%= form.number_field :tax_set_aside_percent, min: 0, max: 100, step: "0.5" %>
           <span class="hint">Share of net profit to hold back for quarterly estimated taxes.</span>

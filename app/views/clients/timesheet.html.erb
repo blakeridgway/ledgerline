@@ -106,6 +106,7 @@
               <th>Day</th>
               <th>Work</th>
               <th class="num">Hours</th>
+              <th class="num">Break</th>
             </tr>
           </thead>
           <tbody>
@@ -115,6 +116,7 @@
                 <td class="muted"><%= day.date.strftime("%a") %></td>
                 <td><%= day.description %></td>
                 <td class="num-strong"><%= hours_label(day.hours) %></td>
+                <td class="num tabular"><%= break_label(day.break_minutes) %></td>
               </tr>
             <% end %>
           </tbody>
@@ -129,6 +131,7 @@
                 <% end %>
               </td>
               <td class="num tabular"><%= hours_label(@timesheet.total_hours) %></td>
+              <td class="num tabular"><%= break_label(@timesheet.break_minutes) %></td>
             </tr>
           </tfoot>
         </table>
@@ -145,6 +148,11 @@
         <% hours = @timesheet.non_billable_hours %>
         <%= hours_label(hours) %> non-billable <%= "hour".pluralize(hours.to_i) %> logged for this client in the
         same period <%= hours == 1 ? "is" : "are" %> excluded from the total above.
+      </div>
+    <% end %>
+    <% if @timesheet.break_minutes.positive? %>
+      <div class="card__footer muted small">
+        <%= break_label(@timesheet.break_minutes) %> of break time logged; it is excluded from the billable hours above.
       </div>
     <% end %>
   </div>

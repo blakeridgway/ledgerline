@@ -62,16 +62,19 @@ User.create!(email_address: "me@example.com", password: "secret")
 ## Using it
 
 1. **Business** (top right) — fill in your details and payment instructions first;
-   they are rendered onto every invoice PDF.
+   they are rendered onto every invoice PDF. Set the **default workday hours**
+   (7 if you take an hour for lunch) used when logging a whole week.
 2. **Add client** — choose hourly or monthly billing and set the rate. For a
    retainer, also set **expected hours per month** (the form prefills it from
    your business settings) to get progress tracking and timesheets. Archived
    clients stay in the app for your records but drop out of the active list.
 3. **Log time** — from the dashboard, the Time page, or a client page. The
-   stopwatch on the Log time card fills in the hours field when you stop it.
-   Entries can be non-billable, which keeps them out of invoices and timesheets.
-   For a full week at once, **Log a week** shows one row per day with
-   "fill weekdays with 8", so a full-time retainer month is a handful of
+   stopwatch on the Log time card fills in the hours field when you stop it, and
+   its **Take break / Resume** control pauses the clock so lunch is never billed
+   — the break time is recorded on the timesheet instead. Entries can be
+   non-billable, which keeps them out of invoices and timesheets. For a full week
+   at once, **Log a week** shows one row per day and fills weekdays with your
+   default workday hours, so a full-time retainer month is a handful of
    submissions rather than twenty.
 4. **New invoice** — pick a client and a period. The preview updates as you
    change either, showing exactly which entries will be billed and what the
@@ -207,15 +210,17 @@ app/javascript    Stimulus controllers; lib/stopwatch holds the tested billing a
 ## Tests
 
 ```bash
-bin/rails test       # 260 tests: models, timesheets, tax summary, the invoice builder, mailers, PDFs, controllers
+bin/rails test       # 268 tests: models, timesheets, tax summary, the invoice builder, mailers, PDFs, controllers
 node --test test/javascript   # stopwatch arithmetic — breaks must never be billed
 bin/rubocop          # styling (rubocop-rails-omakase)
+bin/rails test:system         # browser smoke test of the timer wiring (needs Chrome)
 ```
 
 Tests run against SQLite in parallel; fixtures in `test/fixtures` are written to
 be valid records rather than placeholders. The JavaScript suite needs no npm
 install — it uses Node's built-in test runner. `bin/ci` runs all of the above
-plus the security scans.
+except the system tests plus the security scans; system tests run in their own
+CI job with Chrome installed.
 
 ## Notes on this setup
 

@@ -30,6 +30,17 @@ class TimesheetPdfTest < ActiveSupport::TestCase
     assert_includes pdf_text(pdf), "non-billable hour"
   end
 
+  test "prints break time when it was logged" do
+    sheet = clients(:vertex).timesheet_for(Date.current)
+    sheet.entries.first.update!(break_minutes: 90)
+
+    text = pdf_text(TimesheetPdf.new(sheet).render)
+
+    assert_includes text, "Break"
+    assert_includes text, "1.5 h"
+    assert_includes text, "break time"
+  end
+
   test "renders a retainer with no commitment" do
     pdf = TimesheetPdf.new(clients(:halcyon).timesheet_for(Date.current)).render
 

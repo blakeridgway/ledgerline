@@ -138,6 +138,18 @@ test("honours a custom rounding step", () => {
   assert.equal(watch.workedHours(), 0.25)
 })
 
+test("reports break time in whole minutes", () => {
+  const clock = fakeClock()
+  const watch = watchAt(clock)
+
+  watch.start()
+  clock.advance(30 * MINUTE)
+  watch.toggleBreak()
+  clock.advance(90 * MINUTE)
+
+  assert.equal(watch.breakMinutes(), 90)
+})
+
 test("reset clears everything", () => {
   const clock = fakeClock()
   const watch = watchAt(clock)

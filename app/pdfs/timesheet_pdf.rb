@@ -4,7 +4,7 @@ class TimesheetPdf
   include PdfHelpers
 
   SIDE_COLUMN = 200
-  COLUMN_WIDTHS = [ 78, 42, 326, 70 ].freeze
+  COLUMN_WIDTHS = [ 78, 42, 276, 70, 50 ].freeze
 
   def initialize(timesheet)
     @timesheet = timesheet
@@ -138,19 +138,20 @@ class TimesheetPdf
     end
 
     def build_days(pdf)
-      rows = [ [ "Date", "Day", "Work", "Hours" ] ]
+      rows = [ [ "Date", "Day", "Work", "Hours", "Break" ] ]
 
       timesheet.days.each do |day|
         rows << [
           safe(pdf_date(day.date)),
           safe(day.date.strftime("%a")),
           safe(day.description),
-          safe(hours_label(day.hours))
+          safe(hours_label(day.hours)),
+          safe(break_label(day.break_minutes))
         ]
       end
 
       if timesheet.days.empty?
-        rows << [ "", "", safe("No billable hours logged in this period."), "" ]
+        rows << [ "", "", safe("No billable hours logged in this period."), "", "" ]
       end
 
       pdf.move_down 18
@@ -169,6 +170,8 @@ class TimesheetPdf
         column(1).text_color = MUTED
         column(3).align = :right
         column(3).font_style = :bold
+        column(4).align = :right
+        column(4).text_color = MUTED
       end
 
       build_total_row(pdf)
@@ -196,6 +199,9 @@ class TimesheetPdf
         hours = timesheet.non_billable_hours
         notes << "#{hours_label(hours)} non-billable #{hours == 1 ? 'hour' : 'hours'} logged in the " \
                  "same period #{hours == 1 ? 'is' : 'are'} excluded."
+      end
+      if timesheet.break_minutes.positive?
+        notes << "#{break_label(timesheet.break_minutes)} of break time was logged and is excluded from billable hours."
       end
 
       pdf.move_down 16

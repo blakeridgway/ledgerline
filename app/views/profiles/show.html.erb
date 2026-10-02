@@ -31,6 +31,7 @@
             —
           <% end %>
         </dd>
+        <dt>Workday</dt><dd><%= hours_label(current_user.default_workday_hours) %> hrs</dd>
         <dt>Invoice prefix</dt><dd class="mono"><%= current_user.invoice_prefix %></dd>
         <dt>Tax set-aside</dt>
         <dd><%= number_to_percentage(current_user.tax_set_aside_percent, precision: 0) %> of net profit</dd>

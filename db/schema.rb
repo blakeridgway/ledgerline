@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_02_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_02_000101) do
   create_table "clients", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "name", null: false
@@ -104,6 +104,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_000000) do
     t.integer "invoice_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "break_minutes", default: 0, null: false
     t.index ["client_id", "worked_on"], name: "index_time_entries_on_client_id_and_worked_on"
     t.index ["client_id"], name: "index_time_entries_on_client_id"
     t.index ["invoice_id", "worked_on"], name: "index_time_entries_on_invoice_id_and_worked_on"
@@ -126,6 +127,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_000000) do
     t.datetime "updated_at", null: false
     t.decimal "expected_hours_per_month", precision: 6, scale: 2, default: "0.0", null: false
     t.decimal "tax_set_aside_percent", precision: 5, scale: 2, default: "30.0", null: false
+    t.decimal "default_workday_hours", precision: 4, scale: 2, default: "8.0", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 

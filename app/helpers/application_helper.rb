@@ -22,6 +22,14 @@ module ApplicationHelper
     date&.strftime("%b %-d, %Y").to_s
   end
 
+  # "30 min", "1.5 h", or "—" when nothing was logged.
+  def break_label(minutes)
+    minutes = minutes.to_i
+    return "—" if minutes.zero?
+
+    minutes < 60 ? "#{minutes} min" : "#{hours_label(minutes / 60.0)} h"
+  end
+
   def invoice_status_badge(status)
     tone = { "draft" => "neutral", "sent" => "info", "paid" => "success", "void" => "muted" }.fetch(status, "neutral")
     tag.span(status.titleize, class: "badge badge--#{tone}")

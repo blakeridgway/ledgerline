@@ -5,7 +5,7 @@ import { Stopwatch } from "lib/stopwatch"
 // controls to start/stop/break and renders worked and break time. The billing
 // arithmetic (net worked hours) lives in lib/stopwatch and is unit-tested.
 export default class extends Controller {
-  static targets = [ "display", "toggle", "break", "hours", "hint", "breakDisplay" ]
+  static targets = [ "display", "toggle", "break", "hours", "breakMinutes", "hint", "breakDisplay" ]
   static values = { roundTo: { type: Number, default: 0.01 } }
 
   connect() {
@@ -34,6 +34,7 @@ export default class extends Controller {
 
     this.stopwatch.stop()
     this.stopTicking()
+    this.applyBreakMinutes()
     this.applyHours()
     this.render()
   }
@@ -49,11 +50,13 @@ export default class extends Controller {
     this.stopwatch.reset()
     this.stopTicking()
     if (this.hasHoursTarget) this.hoursTarget.value = ""
+    if (this.hasBreakMinutesTarget) this.breakMinutesTarget.value = "0"
     this.render()
   }
 
   tick() {
     this.render()
+    this.applyBreakMinutes()
     if (!this.stopwatch.onBreak) this.applyHours()
   }
 
@@ -61,6 +64,12 @@ export default class extends Controller {
     if (!this.hasHoursTarget) return
 
     this.hoursTarget.value = this.stopwatch.workedHours().toFixed(2)
+  }
+
+  applyBreakMinutes() {
+    if (!this.hasBreakMinutesTarget) return
+
+    this.breakMinutesTarget.value = this.stopwatch.breakMinutes()
   }
 
   render() {

@@ -24,6 +24,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
       default_currency: "USD",
       default_payment_terms_days: "45",
       expected_hours_per_month: "160",
+      default_workday_hours: "7",
       tax_set_aside_percent: "25",
       invoice_prefix: "BS"
     } }
@@ -33,6 +34,7 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Blake Studio", user.business_name
     assert_equal 45, user.default_payment_terms_days
     assert_equal 160.to_d, user.expected_hours_per_month
+    assert_equal 7.to_d, user.default_workday_hours
     assert_equal 25.to_d, user.tax_set_aside_percent
     assert_equal "BS", user.invoice_prefix
   end

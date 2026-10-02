@@ -11,6 +11,7 @@ blake:
   default_payment_terms_days: 30
   invoice_prefix: INV
   expected_hours_per_month: 160
+  default_workday_hours: 8
   tax_set_aside_percent: 30
   payment_instructions: "ACH transfer, routing 000000000."
 
@@ -23,4 +24,5 @@ other:
   default_payment_terms_days: 14
   invoice_prefix: SAM
   expected_hours_per_month: 0
+  default_workday_hours: 8
   tax_set_aside_percent: 0

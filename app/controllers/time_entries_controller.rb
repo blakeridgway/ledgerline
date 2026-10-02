@@ -104,7 +104,7 @@ class TimeEntriesController < ApplicationController
     end
 
     def time_entry_params
-      params.expect(time_entry: [ :client_id, :worked_on, :hours, :description, :billable ])
+      params.expect(time_entry: [ :client_id, :worked_on, :hours, :break_minutes, :description, :billable ])
     end
 
     def filter_params

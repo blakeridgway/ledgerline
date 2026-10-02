@@ -5,7 +5,7 @@
 # attached to an invoice, so a timesheet is still correct when hours are logged
 # after the invoice for that month was already raised.
 class Timesheet
-  Day = Struct.new(:date, :hours, :descriptions, keyword_init: true) do
+  Day = Struct.new(:date, :hours, :descriptions, :break_minutes, keyword_init: true) do
     def description
       descriptions.join(" · ")
     end
@@ -32,13 +32,24 @@ class Timesheet
       Day.new(
         date: date,
         hours: group.sum { |entry| entry.hours.to_d },
-        descriptions: group.map(&:summary).uniq
+        descriptions: group.map(&:summary).uniq,
+        break_minutes: group.sum { |entry| entry.break_minutes.to_i }
       )
     end
   end
 
   def total_hours
     @total_hours ||= entries.sum { |entry| entry.hours.to_d }
+  end
+
+  # Break time logged alongside the billable hours. Informational: `total_hours`
+  # is already net of it, so this never changes what is billed.
+  def break_minutes
+    @break_minutes ||= entries.sum { |entry| entry.break_minutes.to_i }
+  end
+
+  def break_hours
+    break_minutes.to_d / 60
   end
 
   def non_billable_hours

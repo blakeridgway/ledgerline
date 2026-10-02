@@ -66,6 +66,15 @@
       <%= form.number_field :hours, step: 0.25, min: 0, placeholder: "1.50",
             required: true, data: { timer_target: "hours" } %>
     </div>
+
+    <div class="field">
+      <%= form.label :break_minutes, "Break (min)" %>
+      <%= form.number_field :break_minutes, min: 0, step: 1,
+            data: { timer_target: "breakMinutes" } %>
+      <% if show_timer %>
+        <span class="hint">Filled by the timer's break control.</span>
+      <% end %>
+    </div>
   </div>
 
   <div class="field">

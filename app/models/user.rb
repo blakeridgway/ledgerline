@@ -15,6 +15,7 @@ class User < ApplicationRecord
     format: { with: /\A[A-Za-z0-9._-]+\z/, message: "may only contain letters, numbers, dots, dashes and underscores" }
   validates :default_payment_terms_days, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :expected_hours_per_month, numericality: { greater_than_or_equal_to: 0 }
+  validates :default_workday_hours, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 24 }
   validates :tax_set_aside_percent, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
 
   # Name shown as the "from" contact on invoices, falling back to the login email.

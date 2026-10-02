@@ -22,7 +22,8 @@ class ProfilesController < ApplicationController
       params.expect(user: [
         :name, :business_name, :email_address, :phone, :address, :tax_id,
         :default_currency, :default_payment_terms_days, :invoice_prefix,
-        :expected_hours_per_month, :tax_set_aside_percent, :payment_instructions
+        :expected_hours_per_month, :default_workday_hours, :tax_set_aside_percent,
+        :payment_instructions
       ])
     end
 end

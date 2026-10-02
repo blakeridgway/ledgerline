@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <div class="card" data-controller="batch" data-batch-default-hours-value="8">
+    <div class="card" data-controller="batch" data-batch-default-hours-value="<%= current_user.default_workday_hours %>">
       <div class="card__header">
         <h2><%= @client.display_name %> · week of <%= date_label(@week_start) %></h2>
         <span class="muted small">
@@ -98,7 +98,7 @@
         <div class="card__footer">
           <div class="form-actions">
             <%= submit_tag "Log hours", class: "btn btn--primary" %>
-            <button type="button" class="btn" data-action="batch#fillWeekdays">Fill weekdays with 8</button>
+            <button type="button" class="btn" data-action="batch#fillWeekdays">Fill weekdays with <%= hours_label(current_user.default_workday_hours) %></button>
             <button type="button" class="btn btn--ghost" data-action="batch#clear">Clear</button>
             <span class="field--inline">
               <input type="hidden" name="billable" value="0">

@@ -56,6 +56,10 @@ export class Stopwatch {
     return this.breakBefore + this.segmentSeconds(this.onBreak);
   }
 
+  breakMinutes() {
+    return Math.round(this.breakSeconds / 60);
+  }
+
   // Net worked hours, rounded to the configured step (0.01 = hundredths).
   workedHours() {
     const hours = this.workedSeconds / 3600;

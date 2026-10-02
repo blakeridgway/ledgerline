@@ -31,6 +31,18 @@ class TimesheetTest < ActiveSupport::TestCase
     assert_not_includes @sheet.entries, time_entries(:vertex_non_billable)
   end
 
+  test "rolls up break minutes per day and in total" do
+    time_entries(:vertex_retainer_hours).update!(break_minutes: 30)
+    time_entries(:vertex_sprint_planning).update!(break_minutes: 15)
+    time_entries(:vertex_code_review).update!(break_minutes: 15)
+
+    sheet = @vertex.timesheet_for(Date.current)
+
+    assert_equal [ 30, 30 ], sheet.days.map(&:break_minutes)
+    assert_equal 60, sheet.break_minutes
+    assert_equal 1.to_d, sheet.break_hours
+  end
+
   test "knows the client has a commitment" do
     assert @sheet.target?
     assert_equal 160.to_d, @sheet.expected_hours
