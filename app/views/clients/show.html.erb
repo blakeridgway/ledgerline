@@ -238,7 +238,13 @@
                   <% end %>
                 </td>
                 <td class="num tabular"><%= hours_label(entry.hours) %></td>
-                <td class="nowrap"><%= link_to "Edit", edit_time_entry_path(entry), class: "btn btn--sm btn--ghost" %></td>
+                <td class="nowrap">
+                  <% if entry.invoice_id.nil? %>
+                    <%= link_to "Edit", edit_time_entry_path(entry), class: "btn btn--sm btn--ghost" %>
+                  <% else %>
+                    <span class="muted small">Locked</span>
+                  <% end %>
+                </td>
               </tr>
             <% end %>
           </tbody>

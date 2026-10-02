@@ -53,6 +53,16 @@ class InvoiceTest < ActiveSupport::TestCase
     assert_includes invoice.errors[:period_end], "must be on or after the period start"
   end
 
+  test "requires an issue date" do
+    invoice = @user.invoices.new(
+      client: @client, number: "INV-TEST-ISSUE",
+      period_start: Date.current, period_end: Date.current
+    )
+
+    assert_not invoice.valid?
+    assert_includes invoice.errors[:issued_on], "can't be blank"
+  end
+
   test "mark_paid! records the payment" do
     invoice = invoices(:acme_old_draft)
     invoice.mark_paid!(Date.new(2026, 3, 15))

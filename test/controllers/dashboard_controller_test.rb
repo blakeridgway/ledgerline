@@ -35,4 +35,21 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_match "INV-202107-001", response.body
     assert_match(/overdue/, response.body)
   end
+
+  test "voided invoices are excluded from this month's invoiced total" do
+    sign_in_as users(:blake)
+    invoice = InvoiceBuilder.new(
+      client: clients(:vertex),
+      period_start: Date.current.beginning_of_month,
+      period_end: Date.current.end_of_month,
+      issued_on: Date.current
+    ).call
+
+    get root_path
+    assert_match(%r{Invoiced this month</div>\s*<div class="stat__value">\$6,000\.00}, response.body)
+
+    invoice.void!
+    get root_path
+    assert_match(%r{Invoiced this month</div>\s*<div class="stat__value">\$0\.00}, response.body)
+  end
 end

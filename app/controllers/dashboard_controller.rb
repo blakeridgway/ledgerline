@@ -14,7 +14,7 @@ class DashboardController < ApplicationController
     @unbilled_value = hourly_clients.sum { |client| unbilled_by_client[client] * client.hourly_rate.to_d }
 
     @hours_this_month = entries.in_period(month_range).sum(:hours)
-    @invoiced_this_month = current_user.invoices.where(issued_on: month_range).sum(:total)
+    @invoiced_this_month = current_user.invoices.where(issued_on: month_range).where.not(status: "void").sum(:total)
     @outstanding_total = current_user.invoices.open_invoices.sum(:total)
 
     @retainers = current_user.clients.monthly.active.alphabetical.map do |client|

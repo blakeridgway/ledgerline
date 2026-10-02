@@ -19,7 +19,7 @@ class InvoicesController < ApplicationController
     @overdue_count = current_user.invoices.overdue.count
     @overdue_total = current_user.invoices.overdue.sum(:total)
     @paid_total = current_user.invoices.paid.sum(:total)
-    @year_total = current_user.invoices.where(issued_on: Date.current.all_year).sum(:total)
+    @year_total = current_user.invoices.where(issued_on: Date.current.all_year).where.not(status: "void").sum(:total)
     @retainer_clients = current_user.clients.monthly.active.count
   end
 
@@ -209,8 +209,11 @@ class InvoicesController < ApplicationController
       InvoiceBuilder.preview(client: client, period_start: @period_start, period_end: @period_end)
     end
 
+    # Status is deliberately not mass-assignable: voiding and marking paid must
+    # run through #void! / #mark_paid! so time entries are released and paid_at
+    # is recorded. Those transitions have dedicated actions on the invoice page.
     def invoice_params
-      params.expect(invoice: [ :status, :issued_on, :due_on, :period_start, :period_end, :notes ])
+      params.expect(invoice: [ :issued_on, :due_on, :period_start, :period_end, :notes ])
     end
 
     def draft_retainers_notice(created, skipped)

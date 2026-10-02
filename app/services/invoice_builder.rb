@@ -44,9 +44,9 @@ class InvoiceBuilder
 
   def initialize(client:, period_start:, period_end:, issued_on: Date.current, notes: nil)
     @client = client
-    @period_start = period_start.to_date
-    @period_end = period_end.to_date
-    @issued_on = issued_on.presence&.to_date || Date.current
+    @period_start = coerce_date(period_start)
+    @period_end = coerce_date(period_end)
+    @issued_on = coerce_date(issued_on) || Date.current
     @notes = notes.presence
   end
 
@@ -81,6 +81,8 @@ class InvoiceBuilder
     attr_reader :client, :period_start, :period_end, :issued_on, :notes
 
     def validate!
+      raise Error, "Enter a valid period start." if period_start.blank?
+      raise Error, "Enter a valid period end." if period_end.blank?
       raise Error, "Period end must be on or after period start." if period_end < period_start
 
       duplicate = client.invoices.where(period_start: period_start, period_end: period_end).where.not(status: "void")
@@ -89,6 +91,17 @@ class InvoiceBuilder
       if client.hourly? && entries.empty?
         raise Error, "No unbilled billable hours for that period."
       end
+    end
+
+    # Accepts Date/Time/String and returns nil instead of raising on junk, so a
+    # bad period surfaces as a flash rather than a 500.
+    def coerce_date(value)
+      return nil if value.blank?
+      return value.to_date if value.respond_to?(:to_date)
+
+      Date.parse(value.to_s)
+    rescue ArgumentError, TypeError
+      nil
     end
 
     def entries

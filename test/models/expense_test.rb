@@ -52,4 +52,14 @@ class ExpenseTest < ActiveSupport::TestCase
     assert_not_includes this_year, expenses(:other_user_expense)
     assert_empty @user.expenses.for_year(Date.current.year - 5)
   end
+
+  test "rejects a client owned by another user" do
+    expense = @user.expenses.new(
+      spent_on: Date.current, vendor: "Sketchy", category: "Other", amount: 10,
+      client: clients(:rival)
+    )
+
+    assert_not expense.valid?
+    assert_includes expense.errors[:client], "is not yours"
+  end
 end

@@ -134,6 +134,49 @@ class InvoicesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to invoice_path(invoices(:acme_old_paid))
   end
 
+  test "update cannot change status and bypass the void transition" do
+    invoice = invoices(:acme_old_draft)
+
+    patch invoice_path(invoice), params: { invoice: { status: "void", notes: "Attempted void" } }
+
+    assert_redirected_to invoice_path(invoice)
+    invoice.reload
+    assert invoice.draft?
+    assert_equal "Attempted void", invoice.notes
+  end
+
+  test "issued_on cannot be blanked" do
+    invoice = invoices(:acme_old_draft)
+
+    patch invoice_path(invoice), params: { invoice: { issued_on: "" } }
+
+    assert_response :unprocessable_entity
+    assert invoice.reload.issued_on.present?
+  end
+
+  test "create with an unparseable period reports an error instead of crashing" do
+    assert_no_difference -> { Invoice.count } do
+      post invoices_path, params: {
+        client_id: @client.id,
+        period_start: "not-a-date",
+        period_end: "also-not-a-date"
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match(/valid period/, response.body)
+  end
+
+  test "voided invoices are excluded from the year total" do
+    invoice = retainer_invoice
+    invoice.void!
+
+    get invoices_path
+
+    assert_response :success
+    assert_match(%r{Invoiced this year</div>\s*<div class="stat__value">\$0\.00}, response.body)
+  end
+
   test "mark_sent moves a draft to sent" do
     post mark_sent_invoice_path(invoices(:acme_old_draft))
 

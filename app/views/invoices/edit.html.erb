@@ -5,7 +5,8 @@
     <h1>Edit invoice <%= @invoice.number %></h1>
     <div class="page-head__meta">
       Line items are fixed once created. To change the billed work, delete this invoice
-      and create a new one — the time entries will be released.
+      and create a new one — the time entries will be released. Status is changed with
+      the buttons on the invoice page.
     </div>
   </div>
   <div class="page-actions">
@@ -19,10 +20,6 @@
       <%= render "shared/errors", object: @invoice %>
 
       <div class="form__row">
-        <div class="field">
-          <%= form.label :status, "Status" %>
-          <%= form.select :status, Invoice::STATUSES.map { |s| [ s.titleize, s ] } %>
-        </div>
         <div class="field">
           <%= form.label :issued_on, "Issue date" %>
           <%= form.date_field :issued_on %>

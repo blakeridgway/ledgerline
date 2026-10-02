@@ -99,6 +99,29 @@ class TimeEntriesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to time_entries_path
   end
 
+  test "billed entries cannot be edited or deleted" do
+    invoice = InvoiceBuilder.new(
+      client: clients(:acme),
+      period_start: Date.current.beginning_of_month,
+      period_end: Date.current.end_of_month
+    ).call
+    entry = invoice.time_entries.first
+    assert_not_nil entry
+
+    get edit_time_entry_path(entry)
+    assert_redirected_to time_entries_path
+
+    patch time_entry_path(entry), params: { time_entry: { hours: "99" } }
+    assert_redirected_to time_entries_path
+    assert_not_equal 99.to_d, entry.reload.hours
+
+    assert_no_difference -> { TimeEntry.count } do
+      delete time_entry_path(entry)
+    end
+    assert_redirected_to time_entries_path
+    assert_not_nil entry.reload.invoice_id
+  end
+
   test "cannot log time against another user's client" do
     assert_no_difference -> { TimeEntry.count } do
       post time_entries_path, params: { time_entry: {

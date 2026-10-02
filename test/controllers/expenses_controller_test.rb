@@ -76,6 +76,17 @@ class ExpensesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to expenses_path(year: expense.spent_on.year)
   end
 
+  test "create rejects another user's client tag" do
+    assert_no_difference -> { Expense.count } do
+      post expenses_path, params: { expense: {
+        spent_on: Date.current, vendor: "Sketchy", category: "Other", amount: "10",
+        client_id: clients(:rival).id
+      } }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
   test "cannot reach another user's expense" do
     other = expenses(:other_user_expense)
 

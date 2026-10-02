@@ -9,7 +9,7 @@ class Invoice < ApplicationRecord
   enum :status, { draft: "draft", sent: "sent", paid: "paid", void: "void" }, validate: true
 
   validates :number, presence: true, uniqueness: { scope: :user_id }
-  validates :period_start, :period_end, presence: true
+  validates :period_start, :period_end, :issued_on, presence: true
   validate :period_end_after_period_start
 
   scope :recent_first, -> { order(period_end: :desc, created_at: :desc) }

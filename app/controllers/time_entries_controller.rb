@@ -1,5 +1,6 @@
 class TimeEntriesController < ApplicationController
   before_action :set_time_entry, only: %i[edit update destroy]
+  before_action :prevent_billed_changes, only: %i[edit update destroy]
 
   def index
     @clients = current_user.clients.alphabetical
@@ -90,6 +91,16 @@ class TimeEntriesController < ApplicationController
   private
     def set_time_entry
       @time_entry = current_user.time_entries.find(params[:id])
+    end
+
+    # A billed entry is part of an invoice that was already issued; changing or
+    # deleting it would desync that invoice (and a delete trips the
+    # invoice_line_items foreign key). Void the invoice to release its hours.
+    def prevent_billed_changes
+      return if @time_entry.invoice_id.nil?
+
+      redirect_to time_entries_path,
+        alert: "That entry is on invoice #{@time_entry.invoice.number}. Void or delete the invoice to release it first."
     end
 
     def time_entry_params
